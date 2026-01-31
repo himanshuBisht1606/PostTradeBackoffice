@@ -1,5 +1,10 @@
 bin/
 obj/
-node_modules/
-.vs/
 *.user
+.vs/
+.vscode/
+*.log
+appsettings.Development.json
+node_modules/
+dist/
+build/
