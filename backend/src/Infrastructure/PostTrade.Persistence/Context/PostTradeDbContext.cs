@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PostTrade.Domain.Entities;
 using PostTrade.Domain.Entities.MasterData;
 using PostTrade.Domain.Entities.Trading;
 using PostTrade.Domain.Entities.Settlement;
