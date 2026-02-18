@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PostTrade.Domain.Entities;
 using PostTrade.Domain.Entities.MasterData;
 using PostTrade.Domain.Entities.Trading;
 using PostTrade.Domain.Entities.Settlement;
@@ -65,16 +66,20 @@ public class PostTradeDbContext : DbContext
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PostTradeDbContext).Assembly);
 
         // Global query filter for multi-tenancy
-        var tenantId = _tenantContext.GetCurrentTenantId();
-        
-        // Apply to all tenant-scoped entities
-        modelBuilder.Entity<Broker>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<Client>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<User>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<Trade>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<Position>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<SettlementBatch>().HasQueryFilter(e => e.TenantId == tenantId);
-        modelBuilder.Entity<LedgerEntry>().HasQueryFilter(e => e.TenantId == tenantId);
+        // tenantId may be Guid.Empty at design-time (migrations); skip filters in that case
+        Guid tenantId = Guid.Empty;
+        try { tenantId = _tenantContext.GetCurrentTenantId(); } catch { }
+
+        if (tenantId != Guid.Empty)
+        {
+            modelBuilder.Entity<Broker>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<Client>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<User>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<Trade>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<Position>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<SettlementBatch>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<LedgerEntry>().HasQueryFilter(e => e.TenantId == tenantId);
+        }
     }
 
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
