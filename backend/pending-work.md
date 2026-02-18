@@ -22,11 +22,11 @@ A broker-grade post-trade processing system built with:
 |-------|-------------|--------|
 | Phase 1 | Domain entities, DB schema, EF Core migrations | ✅ Done |
 | Phase 2 | Core infrastructure (JWT, BCrypt, GenericRepo, MediatR pipeline, middleware) | ✅ Done |
-| Phase 3 | Auth endpoints + cleanup | ⏳ Next |
-| Phase 4 | Master Setup endpoints | ⏳ Pending |
-| Phase 5 | Trading endpoints | ⏳ Pending |
-| Phase 6 | Settlement endpoints | ⏳ Pending |
-| Phase 7 | Ledger endpoints | ⏳ Pending |
+| Phase 3 | Auth endpoints + cleanup | ✅ Done |
+| Phase 4 | Master Setup endpoints | ✅ Done |
+| Phase 5 | Trading endpoints | ✅ Done |
+| Phase 6 | Settlement endpoints | ✅ Done |
+| Phase 7 | Ledger endpoints | ⏳ Next |
 | Phase 8 | Reconciliation endpoints | ⏳ Pending |
 | Phase 9 | Corporate Actions endpoints | ⏳ Pending |
 | Phase 10 | EOD Processing endpoints | ⏳ Pending |

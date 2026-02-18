@@ -3,7 +3,12 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using PostTrade.API.Features.Auth;
+using PostTrade.API.Features.MasterSetup;
+using PostTrade.API.Features.Settlement;
+using PostTrade.API.Features.Trading;
 using PostTrade.API.Middleware;
+using Scalar.AspNetCore;
 using PostTrade.Application.Common.Behaviors;
 using PostTrade.Application.Interfaces;
 using PostTrade.Infrastructure.Services;
@@ -13,8 +18,7 @@ using PostTrade.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services
-builder.Services.AddControllers();
+// API Explorer + OpenAPI spec (Swashbuckle generates the JSON; Scalar renders it)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -102,6 +106,7 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 
 // Services
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IPasswordService, PasswordService>();
 
 // CORS
 builder.Services.AddCors(options =>
@@ -119,16 +124,44 @@ var app = builder.Build();
 // Configure middleware
 if (app.Environment.IsDevelopment())
 {
+    // Swashbuckle generates the OpenAPI JSON spec at /swagger/v1/swagger.json
     app.UseSwagger();
-    app.UseSwaggerUI();
+
+    // Scalar replaces Swagger UI — available at /scalar/v1
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("Post-Trade Backoffice API")
+               .WithTheme(ScalarTheme.DeepSpace)
+               .WithDefaultHttpClient(ScalarTarget.CSharp, ScalarClient.HttpClient)
+               .WithOpenApiRoutePattern("/swagger/v1/swagger.json");
+    });
 }
 
 app.UseExceptionHandling();
-app.UseHttpsRedirection();
 app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseTenantContext();
 app.UseAuthorization();
-app.MapControllers();
+
+// Endpoints — Minimal API
+app.MapGroup("/api/auth").MapAuthEndpoints();
+
+// Master Setup
+app.MapGroup("/api/tenants").MapTenantEndpoints().RequireAuthorization();
+app.MapGroup("/api/brokers").MapBrokerEndpoints().RequireAuthorization();
+app.MapGroup("/api/clients").MapClientEndpoints().RequireAuthorization();
+app.MapGroup("/api/users").MapUserEndpoints().RequireAuthorization();
+app.MapGroup("/api/roles").MapRoleEndpoints().RequireAuthorization();
+app.MapGroup("/api/exchanges").MapExchangeEndpoints().RequireAuthorization();
+app.MapGroup("/api/segments").MapSegmentEndpoints().RequireAuthorization();
+app.MapGroup("/api/instruments").MapInstrumentEndpoints().RequireAuthorization();
+
+// Trading
+app.MapGroup("/api/trades").MapTradeEndpoints().RequireAuthorization();
+app.MapGroup("/api/positions").MapPositionEndpoints().RequireAuthorization();
+app.MapGroup("/api/pnl").MapPnLEndpoints().RequireAuthorization();
+
+// Settlement
+app.MapSettlementEndpoints();
 
 app.Run();

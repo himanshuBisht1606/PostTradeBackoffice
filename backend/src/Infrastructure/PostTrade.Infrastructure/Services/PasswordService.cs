@@ -1,13 +1,15 @@
+using PostTrade.Application.Interfaces;
+
 namespace PostTrade.Infrastructure.Services;
 
-public static class PasswordService
+public class PasswordService : IPasswordService
 {
-    public static string HashPassword(string plainPassword)
+    public string HashPassword(string plainPassword)
     {
         return BCrypt.Net.BCrypt.HashPassword(plainPassword);
     }
 
-    public static bool VerifyPassword(string plainPassword, string hashedPassword)
+    public bool VerifyPassword(string plainPassword, string hashedPassword)
     {
         return BCrypt.Net.BCrypt.Verify(plainPassword, hashedPassword);
     }
