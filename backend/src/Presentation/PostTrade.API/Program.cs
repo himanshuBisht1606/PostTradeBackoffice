@@ -5,12 +5,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PostTrade.API.Features.Auth;
 using PostTrade.API.Features.MasterSetup;
+using PostTrade.API.Features.CorporateActions;
+using PostTrade.API.Features.EOD;
+using PostTrade.API.Features.Ledger;
+using PostTrade.API.Features.Reconciliation;
 using PostTrade.API.Features.Settlement;
 using PostTrade.API.Features.Trading;
 using PostTrade.API.Middleware;
 using Scalar.AspNetCore;
 using PostTrade.Application.Common.Behaviors;
 using PostTrade.Application.Interfaces;
+using PostTrade.Infrastructure.EOD;
 using PostTrade.Infrastructure.Services;
 using PostTrade.Persistence;
 using PostTrade.Persistence.Context;
@@ -107,6 +112,7 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 // Services
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<IEODProcessingService, EODProcessingService>();
 
 // CORS
 builder.Services.AddCors(options =>
@@ -163,5 +169,17 @@ app.MapGroup("/api/pnl").MapPnLEndpoints().RequireAuthorization();
 
 // Settlement
 app.MapSettlementEndpoints();
+
+// Ledger
+app.MapLedgerEndpoints();
+
+// Reconciliation
+app.MapReconciliationEndpoints();
+
+// Corporate Actions
+app.MapCorporateActionEndpoints();
+
+// EOD Processing
+app.MapGroup("/api/eod").MapEodEndpoints().RequireAuthorization();
 
 app.Run();

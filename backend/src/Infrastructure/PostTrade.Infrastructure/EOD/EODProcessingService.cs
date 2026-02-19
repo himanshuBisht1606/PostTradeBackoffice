@@ -1,8 +1,9 @@
 using Microsoft.Extensions.Logging;
+using PostTrade.Application.Interfaces;
 
 namespace PostTrade.Infrastructure.EOD;
 
-public class EODProcessingService
+public class EODProcessingService : IEODProcessingService
 {
     private readonly ILogger<EODProcessingService> _logger;
 

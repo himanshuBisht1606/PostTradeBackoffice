@@ -26,10 +26,10 @@ A broker-grade post-trade processing system built with:
 | Phase 4 | Master Setup endpoints | ✅ Done |
 | Phase 5 | Trading endpoints | ✅ Done |
 | Phase 6 | Settlement endpoints | ✅ Done |
-| Phase 7 | Ledger endpoints | ⏳ Next |
-| Phase 8 | Reconciliation endpoints | ⏳ Pending |
-| Phase 9 | Corporate Actions endpoints | ⏳ Pending |
-| Phase 10 | EOD Processing endpoints | ⏳ Pending |
+| Phase 7 | Ledger endpoints | ✅ Done |
+| Phase 8 | Reconciliation endpoints | ✅ Done |
+| Phase 9 | Corporate Actions endpoints | ✅ Done |
+| Phase 10 | EOD Processing endpoints | ✅ Done |
 
 ---
 
