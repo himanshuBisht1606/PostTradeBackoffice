@@ -1,6 +1,6 @@
 services:
   api:
-    image: ghcr.io/himanshubisht1606/posttrade-backoffice/posttrade-api:qa-latest
+    image: ghcr.io/himanshubisht1606/posttrade-api:qa-latest
     container_name: posttrade-api-qa
     restart: unless-stopped
     ports:
