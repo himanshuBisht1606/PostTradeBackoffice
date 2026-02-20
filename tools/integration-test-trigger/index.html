@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Integration Test Runner — PostTrade Backoffice</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 32px;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.25rem;
+      color: #f0f6fc;
+    }
+
+    .subtitle {
+      color: #8b949e;
+      font-size: 0.875rem;
+      margin: 0 0 28px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8125rem;
+      color: #8b949e;
+      margin-bottom: 6px;
+      margin-top: 16px;
+    }
+
+    input, select {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #e6edf3;
+      padding: 8px 12px;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, select:focus {
+      border-color: #388bfd;
+    }
+
+    input[type="password"] { letter-spacing: 0.1em; }
+
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .filter-chip {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 6px 10px;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      text-align: center;
+      user-select: none;
+    }
+
+    .filter-chip:hover { background: #30363d; }
+    .filter-chip.active { background: #1f3d6e; border-color: #388bfd; color: #79c0ff; }
+
+    button[type="submit"] {
+      width: 100%;
+      margin-top: 24px;
+      padding: 10px;
+      background: #238636;
+      border: 1px solid #2ea043;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button[type="submit"]:hover:not(:disabled) { background: #2ea043; }
+    button[type="submit"]:disabled { opacity: 0.5; cursor: default; }
+
+    #status {
+      margin-top: 20px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      display: none;
+    }
+
+    #status.info    { background: #1f3d6e; border: 1px solid #388bfd; color: #79c0ff; }
+    #status.success { background: #1a3a2a; border: 1px solid #2ea043; color: #56d364; }
+    #status.error   { background: #3d1f1f; border: 1px solid #f85149; color: #ff7b72; }
+
+    .run-link {
+      display: inline-block;
+      margin-top: 8px;
+      color: #388bfd;
+      text-decoration: none;
+      font-size: 0.8125rem;
+    }
+
+    .run-link:hover { text-decoration: underline; }
+
+    .divider { border: none; border-top: 1px solid #21262d; margin: 20px 0 4px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>⚗️ Integration Test Runner</h1>
+    <p class="subtitle">PostTrade Backoffice — triggers <code>run-integration-tests.yml</code> via GitHub API</p>
+
+    <form id="form">
+      <label for="owner">GitHub Owner / Org</label>
+      <input id="owner" type="text" placeholder="your-github-username-or-org" required />
+
+      <label for="repo">Repository name</label>
+      <input id="repo" type="text" value="PostTradeBackoffice" required />
+
+      <label for="token">GitHub Personal Access Token
+        <span style="color:#8b949e; font-weight:400">(needs <code>actions:write</code>)</span>
+      </label>
+      <input id="token" type="password" placeholder="ghp_..." required />
+
+      <hr class="divider" />
+
+      <label for="branch">Branch</label>
+      <input id="branch" type="text" value="main" required />
+
+      <label>Test scope</label>
+      <div class="filter-grid">
+        <div class="filter-chip active" data-filter="">All tests</div>
+        <div class="filter-chip" data-filter="HealthApi">HealthApi</div>
+        <div class="filter-chip" data-filter="AuthApi">AuthApi</div>
+        <div class="filter-chip" data-filter="TenantsApi">TenantsApi</div>
+        <div class="filter-chip" data-filter="ClientsApi">ClientsApi</div>
+        <div class="filter-chip" data-filter="TradesApi">TradesApi</div>
+        <div class="filter-chip" data-filter="SettlementApi">SettlementApi</div>
+        <div class="filter-chip" data-filter="LedgerApi">LedgerApi</div>
+        <div class="filter-chip" data-filter="ReconciliationApi">ReconciliationApi</div>
+      </div>
+      <input id="filterDisplay" type="text" placeholder="or type a custom filter..."
+             style="margin-top:8px" />
+
+      <button type="submit" id="btn">▶ Trigger Integration Tests</button>
+    </form>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    // --- chip selection ---
+    let selectedFilter = "";
+    document.querySelectorAll(".filter-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+        chip.classList.add("active");
+        selectedFilter = chip.dataset.filter;
+        document.getElementById("filterDisplay").value = selectedFilter;
+      });
+    });
+
+    document.getElementById("filterDisplay").addEventListener("input", e => {
+      selectedFilter = e.target.value.trim();
+      document.querySelectorAll(".filter-chip").forEach(c => c.classList.remove("active"));
+      if (!selectedFilter) {
+        document.querySelector('[data-filter=""]').classList.add("active");
+      }
+    });
+
+    // --- form submit ---
+    document.getElementById("form").addEventListener("submit", async e => {
+      e.preventDefault();
+
+      const owner  = document.getElementById("owner").value.trim();
+      const repo   = document.getElementById("repo").value.trim();
+      const token  = document.getElementById("token").value.trim();
+      const branch = document.getElementById("branch").value.trim();
+      const filter = selectedFilter || document.getElementById("filterDisplay").value.trim();
+
+      const btn    = document.getElementById("btn");
+      const status = document.getElementById("status");
+
+      btn.disabled = true;
+      btn.textContent = "Triggering…";
+      status.style.display = "none";
+
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/actions/workflows/run-integration-tests.yml/dispatches`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: "application/vnd.github+json",
+              "X-GitHub-Api-Version": "2022-11-28",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ref: branch,
+              inputs: { branch, filter },
+            }),
+          }
+        );
+
+        if (res.status === 204) {
+          status.className = "success";
+          status.innerHTML = `
+            ✅ Workflow triggered on <strong>${branch}</strong>
+            ${filter ? `(filter: <code>${filter}</code>)` : "(all tests)"}.<br/>
+            <a class="run-link"
+               href="https://github.com/${owner}/${repo}/actions/workflows/run-integration-tests.yml"
+               target="_blank">
+              → View run on GitHub Actions
+            </a>`;
+        } else {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.message || `HTTP ${res.status}`);
+        }
+      } catch (err) {
+        status.className = "error";
+        status.textContent = `❌ ${err.message}`;
+      } finally {
+        status.style.display = "block";
+        btn.disabled = false;
+        btn.textContent = "▶ Trigger Integration Tests";
+      }
+    });
+  </script>
+</body>
+</html>

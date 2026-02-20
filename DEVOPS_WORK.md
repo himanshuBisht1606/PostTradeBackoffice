@@ -34,7 +34,7 @@
 Both workflows: run unit tests → build & push Docker image to ghcr.io → SCP compose file → SSH deploy → health check verify.
 
 ---
-
+ 
 ## GitHub Secrets
 
 > Settings → Secrets and variables → Actions → Repository secrets

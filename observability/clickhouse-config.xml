@@ -1,0 +1,22 @@
+<clickhouse>
+    <logger>
+        <level>warning</level>
+        <console>true</console>
+    </logger>
+
+    <!-- Reduce memory footprint for self-hosted setup -->
+    <max_server_memory_usage_to_ram_ratio>0.4</max_server_memory_usage_to_ram_ratio>
+
+    <mark_cache_size>536870912</mark_cache_size>
+
+    <compression>
+        <case>
+            <method>zstd</method>
+        </case>
+    </compression>
+
+    <!-- Allow SigNoz to create its databases -->
+    <access_control_improvements>
+        <users_without_row_policies_can_read_rows>true</users_without_row_policies_can_read_rows>
+    </access_control_improvements>
+</clickhouse>
