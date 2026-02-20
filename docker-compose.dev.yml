@@ -1,3 +1,7 @@
+networks:
+  posttrade-observability:
+    external: true   # created by docker-compose.signoz.yml
+
 services:
   api:
     image: ghcr.io/himanshubisht1606/posttrade-api:dev-latest
@@ -12,4 +16,9 @@ services:
       Jwt__Issuer: PostTradeBackoffice
       Jwt__Audience: PostTradeBackoffice
       Jwt__ExpiryMinutes: "60"
+      # SigNoz — send all telemetry to the OTel Collector running on the same VM
+      OpenTelemetry__Endpoint: "http://signoz-otel-collector:4317"
     mem_limit: 700m
+    networks:
+      - default
+      - posttrade-observability

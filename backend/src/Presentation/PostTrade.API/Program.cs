@@ -4,6 +4,9 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
 using PostTrade.API;
 using PostTrade.API.Features.Auth;
 using PostTrade.API.Features.MasterSetup;
@@ -15,6 +18,8 @@ using PostTrade.API.Features.Settlement;
 using PostTrade.API.Features.Trading;
 using PostTrade.API.Middleware;
 using Scalar.AspNetCore;
+using Serilog;
+using Serilog.Sinks.OpenTelemetry;
 using PostTrade.Application.Common.Behaviors;
 using PostTrade.Application.Interfaces;
 using PostTrade.Infrastructure.EOD;
@@ -23,13 +28,79 @@ using PostTrade.Persistence;
 using PostTrade.Persistence.Context;
 using PostTrade.Persistence.Repositories;
 
+// ── Serilog bootstrap logger (captures startup errors before full config) ─────
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+try
+{
 var builder = WebApplication.CreateBuilder(args);
 
-// Serialize enums as their string names (e.g. "Pending" instead of 1) across the whole API
+// ── Serilog — structured logging sent to SigNoz via OTLP ─────────────────────
+var otlpEndpoint = builder.Configuration["OpenTelemetry:Endpoint"];
+
+builder.Host.UseSerilog((ctx, services, cfg) =>
+{
+    cfg.ReadFrom.Configuration(ctx.Configuration)
+       .ReadFrom.Services(services)
+       .Enrich.FromLogContext()
+       .Enrich.WithMachineName()
+       .Enrich.WithProcessId()
+       .Enrich.WithThreadId()
+       .WriteTo.Console(
+           outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}");
+
+    // Only ship to SigNoz when an endpoint is configured (skipped in unit/integration tests)
+    if (!string.IsNullOrEmpty(otlpEndpoint))
+    {
+        cfg.WriteTo.OpenTelemetry(o =>
+        {
+            o.Endpoint = otlpEndpoint.Replace("4317", "4318"); // Serilog sink uses HTTP, not gRPC
+            o.Protocol = OtlpProtocol.HttpProtobuf;
+            o.ResourceAttributes = new Dictionary<string, object>
+            {
+                ["service.name"]             = "PostTrade.API",
+                ["service.version"]          = "1.0.0",
+                ["deployment.environment"]   = ctx.HostingEnvironment.EnvironmentName
+            };
+        });
+    }
+});
+
+// ── OpenTelemetry — traces + metrics → SigNoz via OTLP ───────────────────────
+if (!string.IsNullOrEmpty(otlpEndpoint))
+{
+    builder.Services.AddOpenTelemetry()
+        .ConfigureResource(r => r
+            .AddService(
+                serviceName:    "PostTrade.API",
+                serviceVersion: "1.0.0"))
+        .WithTracing(t => t
+            .AddAspNetCoreInstrumentation(o =>
+            {
+                o.RecordException = true;
+                // Skip noisy health-check traces
+                o.Filter = ctx => ctx.Request.Path != "/health";
+            })
+            .AddHttpClientInstrumentation()
+            .AddEntityFrameworkCoreInstrumentation(o =>
+            {
+                o.SetDbStatementForText = true;  // capture SQL queries in traces
+            })
+            .AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint)))
+        .WithMetrics(m => m
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint)));
+}
+
+// ── Serialize enums as string names (e.g. "Pending" not 1) ───────────────────
 builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
-// API Explorer + OpenAPI spec (Swashbuckle generates the JSON; Scalar renders it)
+// ── API Explorer + OpenAPI (Swashbuckle generates JSON; Scalar renders it) ────
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -64,18 +135,18 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// MediatR
+// ── MediatR ───────────────────────────────────────────────────────────────────
 builder.Services.AddMediatR(cfg =>
     cfg.RegisterServicesFromAssembly(typeof(PostTrade.Application.Common.Behaviors.ValidationBehavior<,>).Assembly));
 
-// AutoMapper
+// ── AutoMapper ────────────────────────────────────────────────────────────────
 builder.Services.AddAutoMapper(typeof(PostTrade.Application.Common.Mappings.MappingProfile).Assembly);
 
-// FluentValidation
+// ── FluentValidation ──────────────────────────────────────────────────────────
 builder.Services.AddValidatorsFromAssembly(typeof(PostTrade.Application.Common.Behaviors.ValidationBehavior<,>).Assembly);
 builder.Services.AddTransient(typeof(MediatR.IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
-// JWT Authentication
+// ── JWT Authentication ────────────────────────────────────────────────────────
 var jwtKey = builder.Configuration["Jwt:Key"]
     ?? throw new InvalidOperationException("JWT Key is not configured.");
 var jwtIssuer = builder.Configuration["Jwt:Issuer"];
@@ -99,28 +170,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-// Multi-tenancy
+// ── Multi-tenancy ─────────────────────────────────────────────────────────────
 builder.Services.AddScoped<ITenantContext, TenantContext>();
 
-// Database - PostgreSQL
+// ── Database — PostgreSQL ─────────────────────────────────────────────────────
 builder.Services.AddDbContext<PostTradeDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         npgsqlOptions => npgsqlOptions.MigrationsAssembly("PostTrade.Persistence")
     ));
 
-// Unit of Work
+// ── Unit of Work + Repositories ───────────────────────────────────────────────
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-// Repositories
 builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 
-// Services
+// ── Domain Services ───────────────────────────────────────────────────────────
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IEODProcessingService, EODProcessingService>();
 
-// CORS
+// ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -131,18 +200,15 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Health checks (required for Kubernetes liveness/readiness probes)
+// ── Health checks ─────────────────────────────────────────────────────────────
 builder.Services.AddHealthChecks();
 
 var app = builder.Build();
 
-// Configure middleware
+// ── Middleware pipeline ───────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
-    // Swashbuckle generates the OpenAPI JSON spec at /swagger/v1/swagger.json
     app.UseSwagger();
-
-    // Scalar replaces Swagger UI — available at /scalar/v1
     app.MapScalarApiReference(options =>
     {
         options.WithTitle("Post-Trade Backoffice API")
@@ -158,10 +224,9 @@ app.UseAuthentication();
 app.UseTenantContext();
 app.UseAuthorization();
 
-// Endpoints — Minimal API
+// ── Endpoints — Minimal API ───────────────────────────────────────────────────
 app.MapGroup("/api/auth").MapAuthEndpoints();
 
-// Master Setup
 app.MapGroup("/api/tenants").MapTenantEndpoints().RequireAuthorization();
 app.MapGroup("/api/brokers").MapBrokerEndpoints().RequireAuthorization();
 app.MapGroup("/api/clients").MapClientEndpoints().RequireAuthorization();
@@ -171,30 +236,19 @@ app.MapGroup("/api/exchanges").MapExchangeEndpoints().RequireAuthorization();
 app.MapGroup("/api/segments").MapSegmentEndpoints().RequireAuthorization();
 app.MapGroup("/api/instruments").MapInstrumentEndpoints().RequireAuthorization();
 
-// Trading
 app.MapGroup("/api/trades").MapTradeEndpoints().RequireAuthorization();
 app.MapGroup("/api/positions").MapPositionEndpoints().RequireAuthorization();
 app.MapGroup("/api/pnl").MapPnLEndpoints().RequireAuthorization();
 
-// Settlement
 app.MapSettlementEndpoints();
-
-// Ledger
 app.MapLedgerEndpoints();
-
-// Reconciliation
 app.MapReconciliationEndpoints();
-
-// Corporate Actions
 app.MapCorporateActionEndpoints();
 
-// EOD Processing
 app.MapGroup("/api/eod").MapEodEndpoints().RequireAuthorization();
-
-// Health check endpoint — used by Kubernetes liveness and readiness probes
 app.MapHealthChecks("/health");
 
-// Seed test data in Development
+// ── Seed test data in Development ─────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
     var seederLogger = app.Services.GetRequiredService<ILogger<Program>>();
@@ -202,3 +256,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "PostTrade.API terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

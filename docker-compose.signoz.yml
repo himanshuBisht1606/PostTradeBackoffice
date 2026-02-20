@@ -1,0 +1,136 @@
+name: posttrade-signoz
+
+# SigNoz self-hosted observability stack.
+# Run once on the VM — stays up permanently, independent of app deployments.
+#
+# Start:  docker compose -f docker-compose.signoz.yml up -d
+# UI:     http://<VM-IP>:3301
+# Stop:   docker compose -f docker-compose.signoz.yml down
+#
+# The PostTrade API sends traces, metrics, and logs to otel-collector:4317 (gRPC)
+# via the OTEL_EXPORTER_OTLP_ENDPOINT environment variable.
+
+x-clickhouse-defaults: &clickhouse-defaults
+  restart: on-failure
+  image: clickhouse/clickhouse-server:24.1.2.5-alpine
+  tty: true
+  depends_on:
+    clickhouse-setup:
+      condition: service_completed_successfully
+  logging:
+    options:
+      max-size: "50m"
+      max-file: "3"
+
+volumes:
+  signoz-clickhouse-data:
+  signoz-clickhouse-logs:
+  signoz-data:
+
+networks:
+  posttrade-observability:
+    name: posttrade-observability
+    driver: bridge
+
+services:
+
+  # ── ClickHouse — storage backend ──────────────────────────────────────────
+  clickhouse:
+    <<: *clickhouse-defaults
+    container_name: signoz-clickhouse
+    depends_on: []
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+    volumes:
+      - signoz-clickhouse-data:/var/lib/clickhouse
+      - signoz-clickhouse-logs:/var/log/clickhouse-server
+      - ./observability/clickhouse-config.xml:/etc/clickhouse-server/config.d/signoz-config.xml:ro
+      - ./observability/clickhouse-users.xml:/etc/clickhouse-server/users.d/signoz-users.xml:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks: [posttrade-observability]
+
+  clickhouse-setup:
+    image: clickhouse/clickhouse-server:24.1.2.5-alpine
+    container_name: signoz-clickhouse-setup
+    depends_on: []
+    command: |
+      bash -c "echo 'ClickHouse setup complete'"
+    restart: "no"
+    networks: [posttrade-observability]
+
+  # ── Schema migrator — runs once to initialise DB tables ───────────────────
+  schema-migrator:
+    image: signoz/signoz-schema-migrator:0.111.0
+    container_name: signoz-schema-migrator
+    command:
+      - "--dsn=tcp://admin:27ff0399-0d3a-4bd8-919d-17c2181e6fb9@clickhouse:9000"
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    restart: "no"
+    networks: [posttrade-observability]
+
+  # ── OTel Collector — receives telemetry from PostTrade API ────────────────
+  otel-collector:
+    image: signoz/signoz-otel-collector:0.111.0
+    container_name: signoz-otel-collector
+    command:
+      - "--config=/etc/otelcol-config.yaml"
+      - "--manager-config=/etc/manager-config.yaml"
+    volumes:
+      - ./observability/otel-collector-config.yaml:/etc/otelcol-config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC  ← PostTrade API sends here
+      - "4318:4318"   # OTLP HTTP  ← Serilog sink uses this
+      - "8888:8888"   # Collector self-metrics
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      schema-migrator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks: [posttrade-observability]
+
+  # ── Query Service — SigNoz backend API ────────────────────────────────────
+  query-service:
+    image: signoz/query-service:0.55.0
+    container_name: signoz-query-service
+    command:
+      - "-config=/root/config/prometheus.yml"
+    environment:
+      ClickHouseUrl: tcp://admin:27ff0399-0d3a-4bd8-919d-17c2181e6fb9@clickhouse:9000
+      STORAGE: clickhouse
+      GODEBUG: netdns=go
+      TELEMETRY_ENABLED: "true"
+      DEPLOYMENT_TYPE: docker-standalone-amd
+    volumes:
+      - signoz-data:/root/data
+      - ./observability/prometheus.yml:/root/config/prometheus.yml:ro
+    ports:
+      - "8080:8080"   # Query service API (used by frontend)
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      schema-migrator:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks: [posttrade-observability]
+
+  # ── Frontend — SigNoz UI ──────────────────────────────────────────────────
+  frontend:
+    image: signoz/frontend:0.55.0
+    container_name: signoz-frontend
+    environment:
+      SIGNOZ_API_HOST: query-service
+    ports:
+      - "3301:3301"   # ← open this in browser: http://<VM-IP>:3301
+    depends_on:
+      - query-service
+      - otel-collector
+    restart: unless-stopped
+    networks: [posttrade-observability]
