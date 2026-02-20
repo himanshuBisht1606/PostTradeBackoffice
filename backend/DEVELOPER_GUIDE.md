@@ -18,6 +18,7 @@
 9. [Key Patterns](#9-key-patterns)
 10. [Local Setup](#10-local-setup)
 11. [Adding a New Feature](#11-adding-a-new-feature)
+12. [DevOps & Deployment](#12-devops--deployment)
 
 ---
 
@@ -775,3 +776,140 @@ app.MapGroup("/api/things").MapThingEndpoints().RequireAuthorization();
 - [ ] Endpoint file written
 - [ ] Registered in `Program.cs`
 - [ ] Build passes: `dotnet build --nologo`
+
+---
+
+## 12. DevOps & Deployment
+
+> For the full step-by-step QA environment setup, see `DEVOPS_WORK.md` in the repo root.
+
+### Infrastructure
+
+| Component | Detail |
+|-----------|--------|
+| Cloud | Oracle Cloud Infrastructure (OCI) — Always Free tier |
+| VM shape | `VM.Standard.E2.1.Micro` (1 OCPU / 1 GB RAM) per environment |
+| VM OS | Oracle Linux 8 |
+| Container runtime | Docker CE 26.x + Docker Compose |
+| Database | Supabase free PostgreSQL (external — not on the VM) |
+| Image registry | GitHub Container Registry (`ghcr.io`) — free, no separate setup |
+
+### Environments
+
+| Environment | Branch | VM IP | Scalar UI | ASPNETCORE_ENVIRONMENT |
+|-------------|--------|-------|-----------|------------------------|
+| Dev | any branch except `main` | `80.225.204.132` | `http://80.225.204.132/scalar/v1` | `Development` |
+| QA | `main` | _(set when QA VM is created)_ | not available in Staging | `Staging` |
+
+### Pipeline Flow
+
+Both Dev and QA pipelines follow the same sequence:
+
+```
+Push to branch / merge to main
+         │
+         ▼
+  1. Run unit tests          ← dotnet test — blocks deploy on failure
+         │
+         ▼
+  2. Build Docker image      ← docker/build-push-action
+     Tag: dev-<sha> / qa-<sha>
+     Also tag: dev-latest / qa-latest
+         │
+         ▼
+  3. Push to ghcr.io         ← ghcr.io/himanshubisht1606/posttrade-api:<tag>
+         │
+         ▼
+  4. SCP docker-compose file ← appleboy/scp-action → ~/posttrade/ on VM
+         │
+         ▼
+  5. SSH deploy              ← appleboy/ssh-action
+     - docker login ghcr.io
+     - write .env from GitHub Secrets
+     - docker compose up -d --force-recreate --env-file .env
+     - docker image prune -f
+         │
+         ▼
+  6. Health check verify     ← curl http://localhost/health on VM
+```
+
+### Pipeline Files
+
+| File | Trigger |
+|------|---------|
+| `.github/workflows/deploy-dev.yml` | Push to any branch **except** `main` |
+| `.github/workflows/deploy-qa.yml` | Push or merge to `main` |
+
+### Docker Compose Files
+
+| File | Environment | Image tag |
+|------|-------------|-----------|
+| `docker-compose.dev.yml` | Dev VM | `posttrade-api:dev-latest` |
+| `docker-compose.qa.yml` | QA VM | `posttrade-api:qa-latest` |
+
+Both files use environment variable substitution for DB credentials — values come from the `.env` file written by the pipeline (never stored in the repo):
+
+```yaml
+environment:
+  ConnectionStrings__DefaultConnection: "Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASS}"
+  Jwt__Key: ${JWT_SECRET_KEY}
+```
+
+### GitHub Secrets Required
+
+> Settings → Secrets and variables → Actions
+
+| Secret | Used by | Description |
+|--------|---------|-------------|
+| `DEV_VM_HOST` | Dev pipeline | Dev VM public IP |
+| `QA_VM_HOST` | QA pipeline | QA VM public IP |
+| `VM_SSH_KEY` | Both | SSH private key for `opc` user (same key reused for both VMs) |
+| `DEV_DB_HOST` | Dev pipeline | Supabase Dev project host |
+| `DEV_DB_PORT` | Dev pipeline | `5432` |
+| `DEV_DB_NAME` | Dev pipeline | `postgres` |
+| `DEV_DB_USER` | Dev pipeline | Supabase Dev project user |
+| `DEV_DB_PASS` | Dev pipeline | Supabase Dev project password |
+| `QA_DB_HOST` | QA pipeline | Supabase QA project host |
+| `QA_DB_PORT` | QA pipeline | `5432` |
+| `QA_DB_NAME` | QA pipeline | `postgres` |
+| `QA_DB_USER` | QA pipeline | Supabase QA project user |
+| `QA_DB_PASS` | QA pipeline | Supabase QA project password |
+| `JWT_SECRET_KEY` | Both | JWT signing secret (32+ chars) — same for both environments |
+| `GITHUB_TOKEN` | Both | Auto-provided by GitHub Actions — no setup needed |
+
+### How to Deploy
+
+**Deploy to Dev** — push any branch that isn't `main`:
+```bash
+git push origin feature/my-feature
+```
+
+**Deploy to QA** — merge a PR into `main` (or push directly):
+```bash
+git checkout main && git push origin main
+```
+
+Watch the pipeline at: GitHub → Actions tab.
+
+### Checking Deployment Health
+
+SSH into the VM and run:
+```bash
+docker ps                                       # container should be Up
+docker logs posttrade-api-dev --tail 20         # check for errors
+curl http://localhost/health                    # should return: Healthy
+```
+
+Or from a browser / curl externally:
+```
+http://<VM_PUBLIC_IP>/health
+```
+
+### Key Deployment Notes
+
+- **Scalar UI** is only available in Dev (`ASPNETCORE_ENVIRONMENT: Development`). It is disabled in QA (`Staging`).
+- **DB credentials** must use the Supabase **Direct connection** (port `5432`), not the pooler port `6543`. Npgsql can have compatibility issues with the pgbouncer pooler.
+- **Connection string is split into components** (`DB_HOST`, `DB_PORT`, etc.) because ADO.NET connection string parsing breaks when the password contains `@` or `=` characters.
+- **`--env-file .env`** must be passed explicitly when running `docker compose -f docker-compose.dev.yml` — Docker Compose only auto-loads `.env` when the compose filename is the default (`docker-compose.yml`).
+- **ghcr.io image name must be all lowercase** — `himanshubisht1606`, not `himanshuBisht1606`. The workflow lowercases it automatically with `tr '[:upper:]' '[:lower:]'`.
+- **`permissions: packages: write`** is required in the workflow YAML for `docker/build-push-action` to push to ghcr.io.
