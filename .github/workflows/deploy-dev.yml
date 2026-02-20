@@ -113,7 +113,7 @@ jobs:
               "$DB_HOST" "$DB_PORT" "$DB_NAME" "$DB_USER" "$DB_PASS" "$JWT_SECRET_KEY" > .env
 
             # Start / recreate containers
-            docker compose -f docker-compose.dev.yml --env-file .env up -d --pull always --force-recreate
+            docker compose -f docker-compose.dev.yml up -d --pull always --force-recreate
 
             # Clean up old images
             docker image prune -f

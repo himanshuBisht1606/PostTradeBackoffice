@@ -1,0 +1,59 @@
+name: Auto Create Pull Request
+
+on:
+  push:
+    branches-ignore:
+      - main
+    tags-ignore:
+      - "**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  auto-pr:
+    name: Open PR if none exists
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create PR if not already open
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ github.ref_name }}"
+
+          # Check for an existing open PR from this branch into main
+          EXISTING=$(gh pr list \
+            --head "$BRANCH" \
+            --base main \
+            --state open \
+            --json number \
+            --jq 'length')
+
+          if [ "$EXISTING" -eq 0 ]; then
+            # Turn branch name into a readable title
+            # e.g. feature/add-settlement-module → Add settlement module
+            TITLE=$(echo "$BRANCH" | sed 's|.*/||; s/[-_]/ /g')
+            TITLE="${TITLE^}"
+
+            BODY="## Summary
+Auto-created PR for branch \`$BRANCH\`.
+
+## Checklist
+- [ ] Code compiles and all unit tests pass
+- [ ] No secrets or credentials committed
+- [ ] Ready for review"
+
+            gh pr create \
+              --title "$TITLE" \
+              --body "$BODY" \
+              --base main \
+              --head "$BRANCH"
+
+            echo "PR created for branch: $BRANCH"
+          else
+            echo "PR already open for branch: $BRANCH — skipping."
+          fi
