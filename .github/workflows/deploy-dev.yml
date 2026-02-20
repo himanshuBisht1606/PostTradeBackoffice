@@ -82,26 +82,35 @@ jobs:
 
       - name: Deploy to Dev VM
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          DB_PORT: ${{ secrets.DEV_DB_PORT }}
+          DB_NAME: ${{ secrets.DEV_DB_NAME }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+          DB_PASS: ${{ secrets.DEV_DB_PASS }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_ACTOR: ${{ github.actor }}
+          IMAGE: ${{ steps.vars.outputs.image }}
         with:
           host: ${{ secrets.DEV_VM_HOST }}
           username: opc
           key: ${{ secrets.VM_SSH_KEY }}
+          envs: DB_HOST,DB_PORT,DB_NAME,DB_USER,DB_PASS,JWT_SECRET_KEY,GHCR_TOKEN,GHCR_ACTOR,IMAGE
           script: |
             cd ~/posttrade
 
             # Log in to GitHub Container Registry
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io \
-              --username "${{ github.actor }}" \
+            echo "$GHCR_TOKEN" | docker login ghcr.io \
+              --username "$GHCR_ACTOR" \
               --password-stdin
 
             # Pull latest image
-            docker pull ${{ steps.vars.outputs.image }}:dev-latest
+            docker pull "$IMAGE:dev-latest"
 
-            # Write env file (never stored in repo)
-            cat > .env <<EOF
-            DEV_DB_CONNECTION=${{ secrets.DEV_DB_CONNECTION }}
-            JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-            EOF
+            # Write env file with separate components (avoids connection string parsing issues)
+            printf 'DB_HOST=%s\nDB_PORT=%s\nDB_NAME=%s\nDB_USER=%s\nDB_PASS=%s\nJWT_SECRET_KEY=%s\n' \
+              "$DB_HOST" "$DB_PORT" "$DB_NAME" "$DB_USER" "$DB_PASS" "$JWT_SECRET_KEY" > .env
 
             # Start / recreate containers
             docker compose -f docker-compose.dev.yml up -d --pull always --force-recreate
@@ -116,7 +125,7 @@ jobs:
           username: opc
           key: ${{ secrets.VM_SSH_KEY }}
           script: |
-            sleep 15
+            sleep 40
             curl --fail --silent http://localhost/health \
               && echo "Health check passed" \
               || (echo "Health check failed" && exit 1)
