@@ -14,7 +14,7 @@ name: posttrade-signoz
 #   signoz/signoz-otel-collector:0.111.24  – OTel Collector (follows upstream OTel versioning)
 #   signoz/signoz-schema-migrator:latest   – one-time DB init
 #   clickhouse/clickhouse-server:24.1.2-alpine – storage backend
-#   bitnami/zookeeper:3.7.1               – ClickHouse coordination
+#   signoz/zookeeper:3.7.1               – ClickHouse coordination (SigNoz-packaged image)
 
 x-clickhouse-defaults: &clickhouse-defaults
   image: clickhouse/clickhouse-server:24.1.2-alpine
@@ -47,18 +47,20 @@ services:
 
   # ── ZooKeeper — ClickHouse coordination ──────────────────────────────────────
   zookeeper-1:
-    image: bitnami/zookeeper:3.7.1
+    image: signoz/zookeeper:3.7.1
     container_name: signoz-zookeeper
     restart: on-failure
     hostname: zookeeper-1
+    user: root
     environment:
       ZOO_SERVER_ID: 1
-      ALLOW_ANONYMOUS_LOGIN: "yes"
-      ZOO_AUTOPURGE_INTERVAL: 1
+      ZOO_SERVERS: "server.1=zookeeper-1:2888:3888;2181"
+      JVMFLAGS: "-Xms256m -Xmx256m"
+      ZOO_AUTOPURGE_PURGE_INTERVAL: 1
     volumes:
-      - signoz-zookeeper-data:/bitnami/zookeeper/data
-      - signoz-zookeeper-logs:/bitnami/zookeeper/logs
-      - signoz-zookeeper-datalog:/bitnami/zookeeper/datalog
+      - signoz-zookeeper-data:/data
+      - signoz-zookeeper-logs:/logs
+      - signoz-zookeeper-datalog:/datalog
     logging:
       options:
         max-size: "50m"
