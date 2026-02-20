@@ -90,7 +90,7 @@ public class SettlementApiTests : BaseIntegrationTest, IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
         body.GetProperty("data").GetProperty("status").GetString()
-            .Should().Be("Processed");
+            .Should().Be("Completed");
     }
 
     [Fact]
