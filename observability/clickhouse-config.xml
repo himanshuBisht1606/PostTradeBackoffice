@@ -15,8 +15,27 @@
         </case>
     </compression>
 
+    <!-- ZooKeeper coordination (required for ReplicatedMergeTree tables used by SigNoz) -->
+    <zookeeper>
+        <node>
+            <host>zookeeper-1</host>
+            <port>2181</port>
+        </node>
+    </zookeeper>
+
+    <!-- Macros for replica identification -->
+    <macros>
+        <shard>01</shard>
+        <replica>01</replica>
+    </macros>
+
     <!-- Allow SigNoz to create its databases -->
     <access_control_improvements>
         <users_without_row_policies_can_read_rows>true</users_without_row_policies_can_read_rows>
     </access_control_improvements>
+
+    <!-- Distributed DDL -->
+    <distributed_ddl>
+        <path>/clickhouse/task_queue/ddl</path>
+    </distributed_ddl>
 </clickhouse>

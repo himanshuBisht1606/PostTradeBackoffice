@@ -18,6 +18,7 @@ using PostTrade.API.Features.Settlement;
 using PostTrade.API.Features.Trading;
 using PostTrade.API.Middleware;
 using Scalar.AspNetCore;
+using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Sinks.OpenTelemetry;
 using PostTrade.Application.Common.Behaviors;
@@ -257,8 +258,10 @@ if (app.Environment.IsDevelopment())
 
 app.Run();
 }
-catch (Exception ex)
+catch (Exception ex) when (ex is not HostAbortedException)
 {
+    // HostAbortedException is thrown by WebApplicationFactory during integration
+    // test teardown — it is a normal shutdown signal, not an error.
     Log.Fatal(ex, "PostTrade.API terminated unexpectedly");
 }
 finally

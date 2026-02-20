@@ -28,9 +28,9 @@
     <!-- Serilog — structured logs shipped via OTLP to SigNoz -->
     <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
     <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.0.0" />
-    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.0" />
-    <PackageReference Include="Serilog.Enrichers.Process" Version="3.0.0" />
-    <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="2.3.0" />
+    <PackageReference Include="Serilog.Enrichers.Process" Version="2.0.2" />
+    <PackageReference Include="Serilog.Enrichers.Thread" Version="3.1.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Core\PostTrade.Application\PostTrade.Application.csproj" />
