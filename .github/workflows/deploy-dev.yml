@@ -2,8 +2,10 @@ name: Deploy — Dev
 
 on:
   push:
-    branches:
-      - "feature/**"
+    branches-ignore:
+      - main
+    tags-ignore:
+      - "**"
   workflow_dispatch:
 
 env:
