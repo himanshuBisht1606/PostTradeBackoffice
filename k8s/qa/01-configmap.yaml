@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: posttrade-qa-config
+  namespace: posttrade-qa
+data:
+  ASPNETCORE_ENVIRONMENT: "Staging"
+  Jwt__Issuer: "PostTradeBackoffice"
+  Jwt__Audience: "PostTradeBackoffice"
+  Jwt__ExpiryMinutes: "60"
+  POSTGRES_DB: "posttrade_qa"
+  POSTGRES_USER: "posttrade_qa_user"

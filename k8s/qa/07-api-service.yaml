@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: posttrade-api-service
+  namespace: posttrade-qa
+  labels:
+    app: posttrade-api
+    environment: qa
+  annotations:
+    # Required for OCI free-tier Load Balancer provisioning
+    service.beta.kubernetes.io/oci-load-balancer-shape: "flexible"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-min: "10"
+    service.beta.kubernetes.io/oci-load-balancer-shape-flex-max: "10"
+spec:
+  type: LoadBalancer
+  selector:
+    app: posttrade-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080

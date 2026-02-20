@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: posttrade-api
+  namespace: posttrade-qa
+  labels:
+    app: posttrade-api
+    environment: qa
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: posttrade-api
+  template:
+    metadata:
+      labels:
+        app: posttrade-api
+        environment: qa
+    spec:
+      imagePullSecrets:
+        - name: ocir-secret
+      containers:
+        - name: posttrade-api
+          # IMAGE_TAG is replaced by the pipeline before kubectl apply
+          image: IMAGE_TAG
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                configMapKeyRef:
+                  name: posttrade-qa-config
+                  key: ASPNETCORE_ENVIRONMENT
+            - name: Jwt__Issuer
+              valueFrom:
+                configMapKeyRef:
+                  name: posttrade-qa-config
+                  key: Jwt__Issuer
+            - name: Jwt__Audience
+              valueFrom:
+                configMapKeyRef:
+                  name: posttrade-qa-config
+                  key: Jwt__Audience
+            - name: Jwt__ExpiryMinutes
+              valueFrom:
+                configMapKeyRef:
+                  name: posttrade-qa-config
+                  key: Jwt__ExpiryMinutes
+            - name: ConnectionStrings__DefaultConnection
+              valueFrom:
+                secretKeyRef:
+                  name: posttrade-qa-db-secret
+                  key: ConnectionStrings__DefaultConnection
+            - name: Jwt__Key
+              valueFrom:
+                secretKeyRef:
+                  name: posttrade-qa-jwt-secret
+                  key: Jwt__Key
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
