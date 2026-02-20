@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,10 @@ using PostTrade.Persistence.Context;
 using PostTrade.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Serialize enums as their string names (e.g. "Pending" instead of 1) across the whole API
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // API Explorer + OpenAPI spec (Swashbuckle generates the JSON; Scalar renders it)
 builder.Services.AddEndpointsApiExplorer();
