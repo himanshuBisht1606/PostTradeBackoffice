@@ -10,7 +10,7 @@ name: posttrade-signoz
 # The PostTrade API sends traces, metrics, and logs to signoz-otel-collector:4317 (gRPC).
 #
 # Image versions (pinned from SigNoz v0.69 release):
-#   signoz/signoz:0.69.0                   – unified UI + query service
+#   signoz/signoz:v0.112.0                 – unified UI + query service
 #   signoz/signoz-otel-collector:0.111.24  – OTel Collector (follows upstream OTel versioning)
 #   signoz/signoz-schema-migrator:latest   – one-time DB init
 #   clickhouse/clickhouse-server:24.1.2-alpine – storage backend
@@ -125,7 +125,7 @@ services:
 
   # ── SigNoz — unified query service + UI ──────────────────────────────────────
   signoz:
-    image: signoz/signoz:0.69.0
+    image: signoz/signoz:v0.112.0
     container_name: signoz
     command:
       - "-config=/root/config/prometheus.yml"
