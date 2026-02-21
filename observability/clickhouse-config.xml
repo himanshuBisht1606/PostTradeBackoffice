@@ -6,7 +6,6 @@
 
     <!-- Reduce memory footprint for self-hosted setup -->
     <max_server_memory_usage_to_ram_ratio>0.4</max_server_memory_usage_to_ram_ratio>
-
     <mark_cache_size>536870912</mark_cache_size>
 
     <compression>
@@ -15,11 +14,31 @@
         </case>
     </compression>
 
-    <!-- ZooKeeper coordination (required for ReplicatedMergeTree tables used by SigNoz) -->
+    <!-- ClickHouse Keeper (built-in ZooKeeper replacement for single-node) -->
+    <keeper_server>
+        <tcp_port>9181</tcp_port>
+        <server_id>1</server_id>
+        <log_storage_path>/var/lib/clickhouse/coordination/log</log_storage_path>
+        <snapshot_storage_path>/var/lib/clickhouse/coordination/snapshots</snapshot_storage_path>
+        <coordination_settings>
+            <operation_timeout_ms>10000</operation_timeout_ms>
+            <session_timeout_ms>30000</session_timeout_ms>
+            <raft_logs_level>warning</raft_logs_level>
+        </coordination_settings>
+        <raft_configuration>
+            <server>
+                <id>1</id>
+                <hostname>localhost</hostname>
+                <port>9444</port>
+            </server>
+        </raft_configuration>
+    </keeper_server>
+
+    <!-- Point ZooKeeper client to the built-in Keeper above -->
     <zookeeper>
         <node>
-            <host>zookeeper-1</host>
-            <port>2181</port>
+            <host>localhost</host>
+            <port>9181</port>
         </node>
     </zookeeper>
 
@@ -29,13 +48,13 @@
         <replica>01</replica>
     </macros>
 
+    <!-- Distributed DDL via built-in Keeper -->
+    <distributed_ddl>
+        <path>/clickhouse/task_queue/ddl</path>
+    </distributed_ddl>
+
     <!-- Allow SigNoz to create its databases -->
     <access_control_improvements>
         <users_without_row_policies_can_read_rows>true</users_without_row_policies_can_read_rows>
     </access_control_improvements>
-
-    <!-- Distributed DDL -->
-    <distributed_ddl>
-        <path>/clickhouse/task_queue/ddl</path>
-    </distributed_ddl>
 </clickhouse>

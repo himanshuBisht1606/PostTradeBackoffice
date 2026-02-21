@@ -1,20 +1,14 @@
 name: posttrade-signoz
 
-# SigNoz self-hosted observability stack (single-binary architecture).
+# SigNoz self-hosted observability stack.
 # Run ONCE on the VM — stays up permanently, independent of app deployments.
 #
 # Start:   docker compose -f docker-compose.signoz.yml up -d
 # UI:      http://<VM-IP>:8080
 # Stop:    docker compose -f docker-compose.signoz.yml down
 #
-# The PostTrade API sends traces, metrics, and logs to signoz-otel-collector:4317 (gRPC).
-#
-# Image versions (pinned from SigNoz v0.69 release):
-#   signoz/signoz:v0.112.0                 – unified UI + query service
-#   signoz/signoz-otel-collector:0.111.24  – OTel Collector (follows upstream OTel versioning)
-#   signoz/signoz-schema-migrator:latest   – one-time DB init
-#   clickhouse/clickhouse-server:24.1.2-alpine – storage backend
-#   signoz/zookeeper:3.7.1               – ClickHouse coordination (SigNoz-packaged image)
+# ClickHouse uses its built-in Keeper (no external ZooKeeper needed).
+# The PostTrade API sends traces, metrics, and logs to signoz-otel-collector:4317.
 
 x-clickhouse-defaults: &clickhouse-defaults
   image: clickhouse/clickhouse-server:24.1.2-alpine
@@ -34,9 +28,6 @@ volumes:
   signoz-clickhouse-data:
   signoz-clickhouse-logs:
   signoz-sqlite-data:
-  signoz-zookeeper-data:
-  signoz-zookeeper-logs:
-  signoz-zookeeper-datalog:
 
 networks:
   posttrade-observability:
@@ -45,38 +36,15 @@ networks:
 
 services:
 
-  # ── ZooKeeper — ClickHouse coordination ──────────────────────────────────────
-  zookeeper-1:
-    image: signoz/zookeeper:3.7.1
-    container_name: signoz-zookeeper
-    restart: on-failure
-    hostname: zookeeper-1
-    user: root
-    environment:
-      ZOO_SERVER_ID: 1
-      ZOO_SERVERS: "server.1=zookeeper-1:2888:3888;2181"
-      JVMFLAGS: "-Xms256m -Xmx256m"
-      ZOO_AUTOPURGE_PURGE_INTERVAL: 1
-    volumes:
-      - signoz-zookeeper-data:/data
-      - signoz-zookeeper-logs:/logs
-      - signoz-zookeeper-datalog:/datalog
-    logging:
-      options:
-        max-size: "50m"
-        max-file: "3"
-    networks: [posttrade-observability]
-
   # ── ClickHouse — telemetry storage backend ───────────────────────────────────
   clickhouse:
     <<: *clickhouse-defaults
     container_name: signoz-clickhouse
-    depends_on:
-      - zookeeper-1
     hostname: clickhouse
     ports:
       - "9000:9000"
       - "8123:8123"
+      - "9181:9181"    # ClickHouse Keeper (built-in ZooKeeper replacement)
     volumes:
       - signoz-clickhouse-data:/var/lib/clickhouse
       - signoz-clickhouse-logs:/var/log/clickhouse-server
@@ -114,7 +82,7 @@ services:
     ports:
       - "4317:4317"    # OTLP gRPC  ← PostTrade API sends here
       - "4318:4318"    # OTLP HTTP  ← Serilog sink uses this
-      - "8888:8888"    # Collector self-metrics (Prometheus scrape)
+      - "8888:8888"    # Collector self-metrics
     depends_on:
       clickhouse:
         condition: service_healthy
