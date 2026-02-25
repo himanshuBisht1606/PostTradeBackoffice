@@ -49,7 +49,7 @@ public static class DatabaseSeeder
         {
             RoleId       = roleId,
             TenantId     = tenantId,
-            RoleName     = "Admin",
+            RoleName     = "PlatformSuperAdmin",
             Description  = "Full system access",
             IsSystemRole = true,
             CreatedAt    = now,
@@ -87,6 +87,6 @@ public static class DatabaseSeeder
         await context.SaveChangesAsync();
 
         logger.LogInformation(
-            "Seed complete — TenantCode: DEMO | Username: admin | Password: Admin@123");
+            "Seed complete — TenantCode: DEMO | Username: admin | Password: Admin@123 | Role: PlatformSuperAdmin");
     }
 }
