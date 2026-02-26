@@ -7,6 +7,7 @@ public class Client : BaseAuditableEntity
     public Guid ClientId { get; set; }
     public Guid TenantId { get; set; }
     public Guid BrokerId { get; set; }
+    public Guid? BranchId { get; set; }
     public string ClientCode { get; set; } = string.Empty;
     public string ClientName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
@@ -14,13 +15,22 @@ public class Client : BaseAuditableEntity
     public ClientType ClientType { get; set; }
     public ClientStatus Status { get; set; }
     public string? PAN { get; set; }
+    public string? Aadhaar { get; set; }
     public string? DPId { get; set; }
+    public string? DematAccountNo { get; set; }
+    public Depository? Depository { get; set; }
     public string? BankAccountNo { get; set; }
     public string? BankName { get; set; }
     public string? BankIFSC { get; set; }
     public string? Address { get; set; }
-    
+    public string? StateCode { get; set; }
+    public string? StateName { get; set; }
+    public KYCStatus KYCStatus { get; set; }
+    public RiskCategory RiskCategory { get; set; }
+
     // Navigation
     public virtual Tenant Tenant { get; set; } = null!;
     public virtual Broker Broker { get; set; } = null!;
+    public virtual Branch? Branch { get; set; }
+    public virtual ICollection<ClientSegmentActivation> SegmentActivations { get; set; } = new List<ClientSegmentActivation>();
 }

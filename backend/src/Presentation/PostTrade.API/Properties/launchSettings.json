@@ -3,10 +3,11 @@
     "PostTrade.API": {
       "commandName": "Project",
       "launchBrowser": true,
+      "launchUrl": "scalar/v1",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:59312;http://localhost:59313"
+      "applicationUrl": "http://localhost:52365"
     }
   }
 }
