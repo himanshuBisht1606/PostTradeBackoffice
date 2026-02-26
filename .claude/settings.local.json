@@ -8,7 +8,7 @@
       "Bash(Out-Null)",
       "Bash(New-Item -ItemType Directory -Force -Path \"C:\\\\Personal\\\\PostTradeBackoffice\\\\backend\\\\tests\\\\PostTrade.Tests\\\\Ledger\")",
       "Bash(Write-Host \"Done\")",
-      "Bash(git -C /c/Personal/PostTradeBackoffice ls-files:*)"
+      "Bash(git restore:*)"
     ]
   }
 }

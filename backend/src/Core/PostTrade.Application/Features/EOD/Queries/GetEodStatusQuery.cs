@@ -22,9 +22,10 @@ public class GetEodStatusQueryHandler : IRequestHandler<GetEodStatusQuery, EodSt
     {
         var tenantId = _tenantContext.GetCurrentTenantId();
         var date = request.Date.Date;
+        var nextDay = date.AddDays(1);
 
         var snapshots = await _snapshotRepo.FindAsync(
-            s => s.TenantId == tenantId && s.SnapshotDate.Date == date,
+            s => s.TenantId == tenantId && s.SnapshotDate >= date && s.SnapshotDate < nextDay,
             cancellationToken);
 
         var snapshotList = snapshots.ToList();
