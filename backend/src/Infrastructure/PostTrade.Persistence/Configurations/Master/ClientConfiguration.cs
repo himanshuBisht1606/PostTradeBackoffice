@@ -26,6 +26,18 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
         builder.Property(c => c.StateCode).HasMaxLength(2);
         builder.Property(c => c.StateName).HasMaxLength(100);
 
+        // Onboarding fields
+        builder.Property(c => c.Gender).HasMaxLength(20);
+        builder.Property(c => c.MaritalStatus).HasMaxLength(30);
+        builder.Property(c => c.Occupation).HasMaxLength(100);
+        builder.Property(c => c.GrossAnnualIncome).HasMaxLength(50);
+        builder.Property(c => c.FatherSpouseName).HasMaxLength(200);
+        builder.Property(c => c.MotherName).HasMaxLength(200);
+        builder.Property(c => c.AlternateMobile).HasMaxLength(20);
+        builder.Property(c => c.City).HasMaxLength(100);
+        builder.Property(c => c.PinCode).HasMaxLength(10);
+        builder.Property(c => c.CorrespondenceAddress).HasMaxLength(500);
+
         builder.HasIndex(c => new { c.TenantId, c.ClientCode }).IsUnique();
         builder.HasIndex(c => new { c.TenantId, c.BrokerId });
 

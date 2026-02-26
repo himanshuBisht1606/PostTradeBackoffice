@@ -39,6 +39,15 @@ public static class ClientEndpoints
                 : Results.Ok(ApiResponse<ClientDto>.Ok(result, "Client updated"));
         }).WithTags("Clients");
 
+        // POST /api/clients/onboard — multi-step onboarding wizard
+        group.MapPost("/onboard", async (OnboardClientCommand command, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(command, ct);
+            return Results.Created(
+                $"/api/clients/{result.ClientId}",
+                ApiResponse<OnboardingResultDto>.Ok(result, "Client onboarded successfully"));
+        }).WithTags("Clients");
+
         return group;
     }
 }

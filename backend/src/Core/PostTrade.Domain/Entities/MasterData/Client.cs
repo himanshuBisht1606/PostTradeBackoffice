@@ -28,9 +28,25 @@ public class Client : BaseAuditableEntity
     public KYCStatus KYCStatus { get; set; }
     public RiskCategory RiskCategory { get; set; }
 
+    // Onboarding — personal details
+    public DateOnly? DateOfBirth { get; set; }
+    public string? Gender { get; set; }
+    public string? MaritalStatus { get; set; }
+    public string? Occupation { get; set; }
+    public string? GrossAnnualIncome { get; set; }
+    public string? FatherSpouseName { get; set; }
+    public string? MotherName { get; set; }
+
+    // Onboarding — extended contact & address
+    public string? AlternateMobile { get; set; }
+    public string? City { get; set; }
+    public string? PinCode { get; set; }
+    public string? CorrespondenceAddress { get; set; }
+
     // Navigation
     public virtual Tenant Tenant { get; set; } = null!;
     public virtual Broker Broker { get; set; } = null!;
     public virtual Branch? Branch { get; set; }
     public virtual ICollection<ClientSegmentActivation> SegmentActivations { get; set; } = new List<ClientSegmentActivation>();
+    public virtual ICollection<ClientNominee> Nominees { get; set; } = new List<ClientNominee>();
 }

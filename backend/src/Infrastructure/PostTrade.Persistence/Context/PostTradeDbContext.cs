@@ -26,6 +26,7 @@ public class PostTradeDbContext : DbContext
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Broker> Brokers => Set<Broker>();
     public DbSet<Client> Clients => Set<Client>();
+    public DbSet<ClientNominee> ClientNominees => Set<ClientNominee>();
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
@@ -80,6 +81,7 @@ public class PostTradeDbContext : DbContext
             modelBuilder.Entity<Branch>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<ExchangeSegment>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<ClientSegmentActivation>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<ClientNominee>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<User>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<Trade>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<Position>().HasQueryFilter(e => e.TenantId == tenantId);

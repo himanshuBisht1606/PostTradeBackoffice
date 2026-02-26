@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PostTrade.Persistence.Context;
@@ -11,9 +12,11 @@ using PostTrade.Persistence.Context;
 namespace PostTrade.Persistence.Migrations
 {
     [DbContext(typeof(PostTradeDbContext))]
-    partial class PostTradeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260226031809_UpdateSchema")]
+    partial class UpdateSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -552,10 +555,6 @@ namespace PostTrade.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
 
-                    b.Property<string>("AlternateMobile")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<string>("AuditTrail")
                         .HasColumnType("text");
 
@@ -577,10 +576,6 @@ namespace PostTrade.Persistence.Migrations
                     b.Property<Guid>("BrokerId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("City")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.Property<string>("ClientCode")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -594,10 +589,6 @@ namespace PostTrade.Persistence.Migrations
                     b.Property<int>("ClientType")
                         .HasColumnType("integer");
 
-                    b.Property<string>("CorrespondenceAddress")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -608,9 +599,6 @@ namespace PostTrade.Persistence.Migrations
                     b.Property<string>("DPId")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
-
-                    b.Property<DateOnly?>("DateOfBirth")
-                        .HasColumnType("date");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
@@ -630,35 +618,11 @@ namespace PostTrade.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<string>("FatherSpouseName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Gender")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("GrossAnnualIncome")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
                     b.Property<int>("KYCStatus")
                         .HasColumnType("integer");
-
-                    b.Property<string>("MaritalStatus")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<string>("MotherName")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Occupation")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("PAN")
                         .HasMaxLength(20)
@@ -668,10 +632,6 @@ namespace PostTrade.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
-
-                    b.Property<string>("PinCode")
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
 
                     b.Property<int>("RiskCategory")
                         .HasColumnType("integer");
@@ -711,80 +671,6 @@ namespace PostTrade.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Clients", "master");
-                });
-
-            modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.ClientNominee", b =>
-                {
-                    b.Property<Guid>("NomineeId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Address")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
-                    b.Property<Guid>("ClientId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateOnly?>("DateOfBirth")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Mobile")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("NomineeName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("NomineePAN")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("Relationship")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<decimal>("SharePercentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
-                    b.HasKey("NomineeId");
-
-                    b.HasIndex("ClientId");
-
-                    b.ToTable("ClientNominees", "master");
                 });
 
             modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.ClientSegmentActivation", b =>
@@ -2208,17 +2094,6 @@ namespace PostTrade.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.ClientNominee", b =>
-                {
-                    b.HasOne("PostTrade.Domain.Entities.MasterData.Client", "Client")
-                        .WithMany("Nominees")
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Client");
-                });
-
             modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.ClientSegmentActivation", b =>
                 {
                     b.HasOne("PostTrade.Domain.Entities.MasterData.Client", "Client")
@@ -2414,8 +2289,6 @@ namespace PostTrade.Persistence.Migrations
 
             modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.Client", b =>
                 {
-                    b.Navigation("Nominees");
-
                     b.Navigation("SegmentActivations");
                 });
 

@@ -23,6 +23,12 @@ using PostTrade.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// JSON: serialize enums as strings throughout the API
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
+
 // API Explorer + OpenAPI spec (Swashbuckle generates the JSON; Scalar renders it)
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
