@@ -25,6 +25,12 @@ public static class ReconciliationEndpoints
             return Results.Ok(ApiResponse<IEnumerable<ReconciliationDto>>.Ok(result));
         }).WithTags("Reconciliation");
 
+        recon.MapGet("/stats", async (ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new GetReconStatsQuery(), ct);
+            return Results.Ok(ApiResponse<ReconStatsDto>.Ok(result));
+        }).WithTags("Reconciliation");
+
         recon.MapPost("/run", async (RunReconciliationCommand command, ISender sender, CancellationToken ct) =>
         {
             var result = await sender.Send(command, ct);
