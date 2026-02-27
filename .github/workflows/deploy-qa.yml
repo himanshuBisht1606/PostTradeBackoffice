@@ -35,13 +35,25 @@ jobs:
       - name: Restore
         run: dotnet restore backend/PostTradeBackoffice.sln
 
-      - name: Run tests
+      - name: Build
+        run: dotnet build backend/PostTradeBackoffice.sln --no-restore --configuration Release
+
+      - name: Run unit tests
         run: >
           dotnet test
           backend/tests/PostTrade.Tests/PostTrade.Tests.csproj
-          --no-restore
+          --no-build --no-restore
+          --configuration Release
           --nologo
           --logger "console;verbosity=minimal"
+          --logger "trx;LogFileName=unit-test-results.trx"
+
+      - name: Upload unit test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: "**/*.trx"
 
   integration-test:
     name: Run Integration Tests
@@ -60,13 +72,27 @@ jobs:
       - name: Restore
         run: dotnet restore backend/PostTradeBackoffice.sln
 
+      - name: Build
+        run: dotnet build backend/PostTradeBackoffice.sln --no-restore --configuration Release
+
       - name: Run integration tests
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
         run: >
           dotnet test
           backend/tests/PostTrade.IntegrationTests/PostTrade.IntegrationTests.csproj
-          --no-restore
+          --no-build --no-restore
+          --configuration Release
           --nologo
-          --logger "console;verbosity=minimal"
+          --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=integration-test-results.trx"
+
+      - name: Upload integration test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: "**/*.trx"
 
   build-and-deploy:
     name: Build, Push & Deploy to QA VM

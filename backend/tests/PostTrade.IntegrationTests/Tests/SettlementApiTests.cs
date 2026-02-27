@@ -27,7 +27,7 @@ public class SettlementApiTests : BaseIntegrationTest, IAsyncLifetime
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    [Fact]
+    [SkippableFact]
     public async Task GetSettlementBatches_Returns200WithList()
     {
         var response = await Client.GetAsync("/api/settlement/batches");
@@ -39,7 +39,7 @@ public class SettlementApiTests : BaseIntegrationTest, IAsyncLifetime
         body.GetProperty("data").ValueKind.Should().Be(JsonValueKind.Array);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task CreateSettlementBatch_ValidPayload_Returns201()
     {
         var tradeDate = DateTime.UtcNow.Date;
@@ -64,7 +64,7 @@ public class SettlementApiTests : BaseIntegrationTest, IAsyncLifetime
             .Should().NotBeNullOrEmpty();
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task ProcessSettlementBatch_ExistingBatch_Returns200()
     {
         // Create a batch first
@@ -93,7 +93,7 @@ public class SettlementApiTests : BaseIntegrationTest, IAsyncLifetime
             .Should().Be("Completed");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task ProcessSettlementBatch_NonExistentId_Returns404()
     {
         var response = await Client.PutAsync($"/api/settlement/batches/{Guid.NewGuid()}/process", null);

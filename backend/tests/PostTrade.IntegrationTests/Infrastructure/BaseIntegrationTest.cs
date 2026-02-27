@@ -13,6 +13,9 @@ public abstract class BaseIntegrationTest
 
     protected BaseIntegrationTest(CustomWebApplicationFactory factory)
     {
+        if (!factory.DockerAvailable)
+            throw new SkipException("Docker is not running or not installed. Integration tests require Docker.");
+
         Client = factory.CreateClient();
     }
 

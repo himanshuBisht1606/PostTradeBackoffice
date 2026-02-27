@@ -36,11 +36,25 @@ jobs:
       - name: Restore
         run: dotnet restore backend/PostTradeBackoffice.sln
 
+      - name: Build
+        run: dotnet build backend/PostTradeBackoffice.sln --no-restore --configuration Release
+
       - name: Run integration tests
+        env:
+          TESTCONTAINERS_RYUK_DISABLED: "true"
         run: >
           dotnet test
           backend/tests/PostTrade.IntegrationTests/PostTrade.IntegrationTests.csproj
-          --no-restore
+          --no-build --no-restore
+          --configuration Release
           --nologo
           --logger "console;verbosity=normal"
+          --logger "trx;LogFileName=integration-test-results.trx"
           ${{ inputs.filter != '' && format('--filter "FullyQualifiedName~{0}"', inputs.filter) || '' }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results-${{ inputs.branch }}
+          path: "**/*.trx"

@@ -199,10 +199,11 @@ app.MapGroup("/api/eod").MapEodEndpoints().RequireAuthorization();
 // Health check endpoint — used by Kubernetes liveness and readiness probes
 app.MapHealthChecks("/health");
 
-// Seed initial tenant + admin user
+// Apply pending migrations and seed initial data
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PostTrade.Persistence.Context.PostTradeDbContext>();
+    await db.Database.MigrateAsync();
     await PostTrade.Persistence.DatabaseSeeder.SeedAsync(db, BCrypt.Net.BCrypt.HashPassword);
 }
 
