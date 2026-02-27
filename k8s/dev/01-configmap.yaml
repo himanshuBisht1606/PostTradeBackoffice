@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: posttrade-dev-config
+  namespace: posttrade-dev
+data:
+  ASPNETCORE_ENVIRONMENT: "Development"
+  Jwt__Issuer: "PostTradeBackoffice"
+  Jwt__Audience: "PostTradeBackoffice"
+  Jwt__ExpiryMinutes: "60"
+  POSTGRES_DB: "posttrade_dev"
+  POSTGRES_USER: "posttrade_dev_user"

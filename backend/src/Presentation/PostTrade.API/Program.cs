@@ -1,8 +1,10 @@
 using System.Text;
+using System.Text.Json.Serialization;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using PostTrade.API;
 using PostTrade.API.Features.Auth;
 using PostTrade.API.Features.MasterSetup;
 using PostTrade.API.Features.CorporateActions;
@@ -131,6 +133,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Health checks (required for Kubernetes liveness/readiness probes)
+builder.Services.AddHealthChecks();
+
 var app = builder.Build();
 
 // Configure middleware
@@ -190,6 +195,9 @@ app.MapCorporateActionEndpoints();
 
 // EOD Processing
 app.MapGroup("/api/eod").MapEodEndpoints().RequireAuthorization();
+
+// Health check endpoint — used by Kubernetes liveness and readiness probes
+app.MapHealthChecks("/health");
 
 // Seed initial tenant + admin user
 using (var scope = app.Services.CreateScope())

@@ -1,0 +1,15 @@
+services:
+  api:
+    image: ghcr.io/himanshubisht1606/posttrade-api:dev-latest
+    container_name: posttrade-api-dev
+    restart: unless-stopped
+    ports:
+      - "80:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=${DB_HOST};Port=${DB_PORT};Database=${DB_NAME};Username=${DB_USER};Password=${DB_PASS};SSL Mode=Require;Trust Server Certificate=true"
+      Jwt__Key: ${JWT_SECRET_KEY}
+      Jwt__Issuer: PostTradeBackoffice
+      Jwt__Audience: PostTradeBackoffice
+      Jwt__ExpiryMinutes: "60"
+    mem_limit: 700m

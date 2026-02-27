@@ -1,0 +1,46 @@
+name: Run Integration Tests (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to test"
+        required: true
+        default: "main"
+        type: string
+      filter:
+        description: "Test filter (e.g. 'AuthApi' to run only auth tests, leave blank for all)"
+        required: false
+        default: ""
+        type: string
+
+env:
+  DOTNET_VERSION: "8.0.x"
+
+jobs:
+  integration-test:
+    name: Integration Tests (${{ inputs.branch }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout ${{ inputs.branch }}
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.branch }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore backend/PostTradeBackoffice.sln
+
+      - name: Run integration tests
+        run: >
+          dotnet test
+          backend/tests/PostTrade.IntegrationTests/PostTrade.IntegrationTests.csproj
+          --no-restore
+          --nologo
+          --logger "console;verbosity=normal"
+          ${{ inputs.filter != '' && format('--filter "FullyQualifiedName~{0}"', inputs.filter) || '' }}

@@ -1,0 +1,155 @@
+name: Deploy — Dev
+
+on:
+  push:
+    branches-ignore:
+      - main
+    tags-ignore:
+      - "**"
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: "8.0.x"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore backend/PostTradeBackoffice.sln
+
+      - name: Run tests
+        run: >
+          dotnet test
+          backend/tests/PostTrade.Tests/PostTrade.Tests.csproj
+          --no-restore
+          --nologo
+          --logger "console;verbosity=minimal"
+
+  integration-test:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore backend/PostTradeBackoffice.sln
+
+      - name: Run integration tests
+        run: >
+          dotnet test
+          backend/tests/PostTrade.IntegrationTests/PostTrade.IntegrationTests.csproj
+          --no-restore
+          --nologo
+          --logger "console;verbosity=minimal"
+
+  build-and-deploy:
+    name: Build, Push & Deploy to Dev VM
+    runs-on: ubuntu-latest
+    needs: integration-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image name and short SHA
+        id: vars
+        run: |
+          echo "short=${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/posttrade-api" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: backend
+          file: backend/Dockerfile
+          push: true
+          tags: |
+            ${{ steps.vars.outputs.image }}:dev-${{ steps.vars.outputs.short }}
+            ${{ steps.vars.outputs.image }}:dev-latest
+
+      - name: Copy docker-compose file to Dev VM
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEV_VM_HOST }}
+          username: opc
+          key: ${{ secrets.VM_SSH_KEY }}
+          source: docker-compose.dev.yml
+          target: ~/posttrade/
+
+      - name: Deploy to Dev VM
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          DB_PORT: ${{ secrets.DEV_DB_PORT }}
+          DB_NAME: ${{ secrets.DEV_DB_NAME }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+          DB_PASS: ${{ secrets.DEV_DB_PASS }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_ACTOR: ${{ github.actor }}
+          IMAGE: ${{ steps.vars.outputs.image }}
+        with:
+          host: ${{ secrets.DEV_VM_HOST }}
+          username: opc
+          key: ${{ secrets.VM_SSH_KEY }}
+          envs: DB_HOST,DB_PORT,DB_NAME,DB_USER,DB_PASS,JWT_SECRET_KEY,GHCR_TOKEN,GHCR_ACTOR,IMAGE
+          script: |
+            cd ~/posttrade
+
+            # Log in to GitHub Container Registry
+            echo "$GHCR_TOKEN" | docker login ghcr.io \
+              --username "$GHCR_ACTOR" \
+              --password-stdin
+
+            # Pull latest image
+            docker pull "$IMAGE:dev-latest"
+
+            # Write env file with separate components (avoids connection string parsing issues)
+            printf 'DB_HOST=%s\nDB_PORT=%s\nDB_NAME=%s\nDB_USER=%s\nDB_PASS=%s\nJWT_SECRET_KEY=%s\n' \
+              "$DB_HOST" "$DB_PORT" "$DB_NAME" "$DB_USER" "$DB_PASS" "$JWT_SECRET_KEY" > .env
+
+            # Start / recreate containers
+            docker compose -f docker-compose.dev.yml up -d --pull always --force-recreate
+
+            # Clean up old images
+            docker image prune -f
+
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_VM_HOST }}
+          username: opc
+          key: ${{ secrets.VM_SSH_KEY }}
+          script: |
+            sleep 40
+            curl --fail --silent http://localhost/health \
+              && echo "Health check passed" \
+              || (echo "Health check failed" && exit 1)
