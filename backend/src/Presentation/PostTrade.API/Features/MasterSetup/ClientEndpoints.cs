@@ -3,6 +3,7 @@ using PostTrade.API.Common;
 using PostTrade.Application.Features.MasterSetup.Clients.Commands;
 using PostTrade.Application.Features.MasterSetup.Clients.DTOs;
 using PostTrade.Application.Features.MasterSetup.Clients.Queries;
+using PostTrade.Domain.Enums;
 
 namespace PostTrade.API.Features.MasterSetup;
 
@@ -20,8 +21,8 @@ public static class ClientEndpoints
         {
             var result = await sender.Send(new GetClientByIdQuery(id), ct);
             return result is null
-                ? Results.NotFound(ApiResponse<ClientDto>.Fail("Client not found"))
-                : Results.Ok(ApiResponse<ClientDto>.Ok(result));
+                ? Results.NotFound(ApiResponse<ClientDetailDto>.Fail("Client not found"))
+                : Results.Ok(ApiResponse<ClientDetailDto>.Ok(result));
         }).WithTags("Clients");
 
         group.MapPost("/", async (CreateClientCommand command, ISender sender, CancellationToken ct) =>
@@ -35,8 +36,17 @@ public static class ClientEndpoints
             var cmd = command with { ClientId = id };
             var result = await sender.Send(cmd, ct);
             return result is null
-                ? Results.NotFound(ApiResponse<ClientDto>.Fail("Client not found"))
-                : Results.Ok(ApiResponse<ClientDto>.Ok(result, "Client updated"));
+                ? Results.NotFound(ApiResponse<ClientDetailDto>.Fail("Client not found"))
+                : Results.Ok(ApiResponse<ClientDetailDto>.Ok(result, "Client updated"));
+        }).WithTags("Clients");
+
+        // PATCH /api/clients/{id}/status — quick status change
+        group.MapPatch("/{id:guid}/status", async (Guid id, ChangeStatusRequest req, ISender sender, CancellationToken ct) =>
+        {
+            var result = await sender.Send(new ChangeClientStatusCommand(id, req.Status), ct);
+            return result
+                ? Results.Ok(ApiResponse<string>.Ok("Status updated"))
+                : Results.NotFound(ApiResponse<string>.Fail("Client not found"));
         }).WithTags("Clients");
 
         // POST /api/clients/onboard — multi-step onboarding wizard
@@ -51,3 +61,5 @@ public static class ClientEndpoints
         return group;
     }
 }
+
+internal record ChangeStatusRequest(ClientStatus Status);

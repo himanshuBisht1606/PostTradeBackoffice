@@ -43,10 +43,36 @@ public class Client : BaseAuditableEntity
     public string? PinCode { get; set; }
     public string? CorrespondenceAddress { get; set; }
 
+    // Onboarding — holder type & identity
+    public string HolderType { get; set; } = "Single";
+    public string? CitizenshipStatus { get; set; }
+    public string? ResidentialStatus { get; set; }
+    public string? IdentityProofType { get; set; }
+    public string? IdentityProofNumber { get; set; }
+
+    // Onboarding — bank details
+    public string? AccountType { get; set; }
+    public string? BranchName { get; set; }
+
+    // Onboarding — trading segments
+    public bool SegmentNSE { get; set; }
+    public bool SegmentBSE { get; set; }
+    public bool SegmentMCX { get; set; }
+
+    // Non-individual entity fields
+    public string? EntityRegistrationNumber { get; set; }
+    public DateOnly? DateOfConstitution { get; set; }
+    public string? ConstitutionType { get; set; }
+    public string? GSTNumber { get; set; }
+    public string? AnnualTurnover { get; set; }
+    public string? KartaName { get; set; }
+    public string? KartaPan { get; set; }
+
     // Navigation
     public virtual Tenant Tenant { get; set; } = null!;
     public virtual Broker Broker { get; set; } = null!;
     public virtual Branch? Branch { get; set; }
     public virtual ICollection<ClientSegmentActivation> SegmentActivations { get; set; } = new List<ClientSegmentActivation>();
     public virtual ICollection<ClientNominee> Nominees { get; set; } = new List<ClientNominee>();
+    public virtual ICollection<ClientAuthorizedSignatory> AuthorizedSignatories { get; set; } = new List<ClientAuthorizedSignatory>();
 }

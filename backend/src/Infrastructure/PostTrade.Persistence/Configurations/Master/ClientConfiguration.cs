@@ -38,6 +38,23 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
         builder.Property(c => c.PinCode).HasMaxLength(10);
         builder.Property(c => c.CorrespondenceAddress).HasMaxLength(500);
 
+        // Extended onboarding fields
+        builder.Property(c => c.HolderType).IsRequired().HasMaxLength(10).HasDefaultValue("Single");
+        builder.Property(c => c.CitizenshipStatus).HasMaxLength(50);
+        builder.Property(c => c.ResidentialStatus).HasMaxLength(50);
+        builder.Property(c => c.IdentityProofType).HasMaxLength(50);
+        builder.Property(c => c.IdentityProofNumber).HasMaxLength(100);
+        builder.Property(c => c.AccountType).HasMaxLength(20);
+        builder.Property(c => c.BranchName).HasMaxLength(100);
+
+        // Non-individual entity fields
+        builder.Property(c => c.EntityRegistrationNumber).HasMaxLength(100);
+        builder.Property(c => c.ConstitutionType).HasMaxLength(100);
+        builder.Property(c => c.GSTNumber).HasMaxLength(20);
+        builder.Property(c => c.AnnualTurnover).HasMaxLength(50);
+        builder.Property(c => c.KartaName).HasMaxLength(200);
+        builder.Property(c => c.KartaPan).HasMaxLength(10);
+
         builder.HasIndex(c => new { c.TenantId, c.ClientCode }).IsUnique();
         builder.HasIndex(c => new { c.TenantId, c.BrokerId });
 
