@@ -22,6 +22,14 @@ public class PostTradeDbContext : DbContext
         _tenantContext = tenantContext;
     }
 
+    // Reference Data (global, no tenant scope)
+    public DbSet<StateMaster> StateMasters => Set<StateMaster>();
+    public DbSet<BankMaster> BankMasters => Set<BankMaster>();
+    public DbSet<BankMapping> BankMappings => Set<BankMapping>();
+    public DbSet<NsdlDpMaster> NsdlDpMasters => Set<NsdlDpMaster>();
+    public DbSet<CdslDpMaster> CdslDpMasters => Set<CdslDpMaster>();
+    public DbSet<PinCodeMaster> PinCodeMasters => Set<PinCodeMaster>();
+
     // Master Data
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Broker> Brokers => Set<Broker>();

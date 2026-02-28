@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using PostTrade.API;
 using PostTrade.API.Features.Auth;
 using PostTrade.API.Features.MasterSetup;
+using PostTrade.API.Features.ReferenceMaster;
 using PostTrade.API.Features.CorporateActions;
 using PostTrade.API.Features.EOD;
 using PostTrade.API.Features.Ledger;
@@ -162,6 +163,14 @@ app.UseAuthorization();
 
 // Endpoints — Minimal API
 app.MapGroup("/api/auth").MapAuthEndpoints();
+
+// Reference Data (global)
+app.MapGroup("/api/reference/states").MapStateMasterEndpoints().RequireAuthorization();
+app.MapGroup("/api/reference/banks").MapBankMasterEndpoints().RequireAuthorization();
+app.MapGroup("/api/reference/bank-mappings").MapBankMappingEndpoints().RequireAuthorization();
+app.MapGroup("/api/reference/nsdl-dps").MapNsdlDpMasterEndpoints().RequireAuthorization();
+app.MapGroup("/api/reference/cdsl-dps").MapCdslDpMasterEndpoints().RequireAuthorization();
+app.MapGroup("/api/reference/pin-codes").MapPinCodeMasterEndpoints().RequireAuthorization();
 
 // Master Setup
 app.MapGroup("/api/tenants").MapTenantEndpoints().RequireAuthorization();
