@@ -5,7 +5,7 @@ public class AuthApiTests : BaseIntegrationTest
 {
     public AuthApiTests(CustomWebApplicationFactory factory) : base(factory) { }
 
-    [Fact]
+    [SkippableFact]
     public async Task Login_ValidCredentials_Returns200WithToken()
     {
         var response = await Client.PostAsJsonAsync("/api/auth/login", new
@@ -24,7 +24,7 @@ public class AuthApiTests : BaseIntegrationTest
         token.Should().NotBeNullOrEmpty();
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Login_WrongPassword_ReturnsFailure()
     {
         var response = await Client.PostAsJsonAsync("/api/auth/login", new
@@ -37,7 +37,7 @@ public class AuthApiTests : BaseIntegrationTest
         response.IsSuccessStatusCode.Should().BeFalse();
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Login_WrongTenantCode_ReturnsFailure()
     {
         var response = await Client.PostAsJsonAsync("/api/auth/login", new
@@ -50,7 +50,7 @@ public class AuthApiTests : BaseIntegrationTest
         response.IsSuccessStatusCode.Should().BeFalse();
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task Login_ValidCredentials_ResponseContainsUsername()
     {
         var response = await Client.PostAsJsonAsync("/api/auth/login", new

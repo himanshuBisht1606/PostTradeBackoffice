@@ -25,7 +25,10 @@ public class GetClientsQueryHandler : IRequestHandler<GetClientsQuery, IEnumerab
         return clients
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
-            .Select(c => new ClientDto(c.ClientId, c.TenantId, c.BrokerId, c.ClientCode, c.ClientName,
-                c.Email, c.Phone, c.ClientType, c.Status, c.PAN, c.Address, c.BankAccountNo, c.BankName));
+            .Select(c => new ClientDto(c.ClientId, c.TenantId, c.BrokerId, c.BranchId,
+                c.ClientCode, c.ClientName, c.Email, c.Phone, c.ClientType, c.Status,
+                c.PAN, c.Aadhaar, c.DPId, c.DematAccountNo, c.Depository,
+                c.Address, c.StateCode, c.StateName, c.BankAccountNo, c.BankName,
+                c.BankIFSC, c.KYCStatus, c.RiskCategory));
     }
 }

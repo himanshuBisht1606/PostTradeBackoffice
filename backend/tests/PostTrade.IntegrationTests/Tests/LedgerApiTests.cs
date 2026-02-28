@@ -47,7 +47,7 @@ public class LedgerApiTests : BaseIntegrationTest, IAsyncLifetime
         _clientId = Guid.Parse(clientBody.GetProperty("data").GetProperty("clientId").GetString()!);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task GetLedgerEntries_Returns200WithList()
     {
         var response = await Client.GetAsync("/api/ledger/entries");
@@ -59,7 +59,7 @@ public class LedgerApiTests : BaseIntegrationTest, IAsyncLifetime
         body.GetProperty("data").ValueKind.Should().Be(JsonValueKind.Array);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task PostLedgerEntry_ValidCreditEntry_Returns201()
     {
         var unique = Guid.NewGuid().ToString("N")[..8].ToUpper();
@@ -88,7 +88,7 @@ public class LedgerApiTests : BaseIntegrationTest, IAsyncLifetime
             .Should().NotBeNullOrEmpty();
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task PostLedgerEntry_ValidDebitEntry_Returns201()
     {
         var unique = Guid.NewGuid().ToString("N")[..8].ToUpper();

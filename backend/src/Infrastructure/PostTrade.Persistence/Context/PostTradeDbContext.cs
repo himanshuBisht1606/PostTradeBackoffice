@@ -22,10 +22,23 @@ public class PostTradeDbContext : DbContext
         _tenantContext = tenantContext;
     }
 
+    // Reference Data (global, no tenant scope)
+    public DbSet<StateMaster> StateMasters => Set<StateMaster>();
+    public DbSet<BankMaster> BankMasters => Set<BankMaster>();
+    public DbSet<BankMapping> BankMappings => Set<BankMapping>();
+    public DbSet<NsdlDpMaster> NsdlDpMasters => Set<NsdlDpMaster>();
+    public DbSet<CdslDpMaster> CdslDpMasters => Set<CdslDpMaster>();
+    public DbSet<PinCodeMaster> PinCodeMasters => Set<PinCodeMaster>();
+
     // Master Data
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Broker> Brokers => Set<Broker>();
     public DbSet<Client> Clients => Set<Client>();
+    public DbSet<ClientNominee> ClientNominees => Set<ClientNominee>();
+    public DbSet<ClientFatca> ClientFatcas => Set<ClientFatca>();
+    public DbSet<ClientJointHolder> ClientJointHolders => Set<ClientJointHolder>();
+    public DbSet<ClientAuthorizedSignatory> ClientAuthorizedSignatories => Set<ClientAuthorizedSignatory>();
+    public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<User> Users => Set<User>();
     public DbSet<Role> Roles => Set<Role>();
     public DbSet<Permission> Permissions => Set<Permission>();
@@ -34,27 +47,29 @@ public class PostTradeDbContext : DbContext
     public DbSet<Instrument> Instruments => Set<Instrument>();
     public DbSet<Exchange> Exchanges => Set<Exchange>();
     public DbSet<Segment> Segments => Set<Segment>();
-    
+    public DbSet<ExchangeSegment> ExchangeSegments => Set<ExchangeSegment>();
+    public DbSet<ClientSegmentActivation> ClientSegmentActivations => Set<ClientSegmentActivation>();
+
     // Trading
     public DbSet<Trade> Trades => Set<Trade>();
     public DbSet<Position> Positions => Set<Position>();
     public DbSet<PnLSnapshot> PnLSnapshots => Set<PnLSnapshot>();
-    
+
     // Settlement
     public DbSet<SettlementBatch> SettlementBatches => Set<SettlementBatch>();
     public DbSet<SettlementObligation> SettlementObligations => Set<SettlementObligation>();
-    
+
     // Ledger
     public DbSet<LedgerEntry> LedgerEntries => Set<LedgerEntry>();
     public DbSet<ChargesConfiguration> ChargesConfigurations => Set<ChargesConfiguration>();
-    
+
     // Reconciliation
     public DbSet<Domain.Entities.Reconciliation.Reconciliation> Reconciliations => Set<Domain.Entities.Reconciliation.Reconciliation>();
     public DbSet<ReconException> ReconExceptions => Set<ReconException>();
-    
+
     // Corporate Actions
     public DbSet<CorporateAction> CorporateActions => Set<CorporateAction>();
-    
+
     // Audit
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
@@ -74,6 +89,13 @@ public class PostTradeDbContext : DbContext
         {
             modelBuilder.Entity<Broker>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<Client>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<Branch>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<ExchangeSegment>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<ClientSegmentActivation>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<ClientNominee>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<ClientFatca>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<ClientJointHolder>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<ClientAuthorizedSignatory>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<User>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<Trade>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<Position>().HasQueryFilter(e => e.TenantId == tenantId);
@@ -90,7 +112,7 @@ public class PostTradeDbContext : DbContext
         foreach (var entry in entries)
         {
             var entity = (BaseEntity)entry.Entity;
-            
+
             if (entry.State == EntityState.Added)
             {
                 entity.CreatedAt = DateTime.UtcNow;

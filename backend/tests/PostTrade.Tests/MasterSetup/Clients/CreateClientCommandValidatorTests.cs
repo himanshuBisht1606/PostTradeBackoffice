@@ -8,17 +8,24 @@ public class CreateClientCommandValidatorTests
     private readonly CreateClientCommandValidator _validator = new();
 
     private static CreateClientCommand ValidCommand() => new(
-        BrokerId:      Guid.NewGuid(),
-        ClientCode:    "CLT001",
-        ClientName:    "John Doe",
-        Email:         "john@example.com",
-        Phone:         "9876543210",
-        ClientType:    ClientType.Individual,
-        PAN:           "ABCDE1234F",
-        Address:       "123 Main St",
-        BankAccountNo: "123456789",
-        BankName:      "HDFC Bank",
-        BankIFSC:      "HDFC0001234"
+        BrokerId:       Guid.NewGuid(),
+        BranchId:       null,
+        ClientCode:     "CLT001",
+        ClientName:     "John Doe",
+        Email:          "john@example.com",
+        Phone:          "9876543210",
+        ClientType:     ClientType.Individual,
+        PAN:            "ABCDE1234F",
+        Aadhaar:        null,
+        DPId:           null,
+        DematAccountNo: null,
+        Depository:     null,
+        Address:        "123 Main St",
+        StateCode:      null,
+        StateName:      null,
+        BankAccountNo:  "123456789",
+        BankName:       "HDFC Bank",
+        BankIFSC:       "HDFC0001234"
     );
 
     [Fact]
