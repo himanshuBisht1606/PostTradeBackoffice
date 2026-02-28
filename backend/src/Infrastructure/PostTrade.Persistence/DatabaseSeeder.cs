@@ -127,6 +127,144 @@ public static class DatabaseSeeder
             await db.SaveChangesAsync();
         }
 
+        // ── Exchanges — idempotent per code ───────────────────────────────────
+        {
+            var existingCodes = (await db.Exchanges
+                .Where(e => e.TenantId == tenantId)
+                .Select(e => e.ExchangeCode)
+                .ToListAsync())
+                .ToHashSet();
+
+            var defs = new (string Code, string Name, TimeOnly Start, TimeOnly End)[]
+            {
+                ("NSE",   "National Stock Exchange of India",          new TimeOnly(9, 15), new TimeOnly(15, 30)),
+                ("BSE",   "Bombay Stock Exchange",                     new TimeOnly(9, 15), new TimeOnly(15, 30)),
+                ("MCX",   "Multi Commodity Exchange of India",         new TimeOnly(9,  0), new TimeOnly(23, 30)),
+                ("NCDEX", "National Commodity and Derivatives Exchange",new TimeOnly(9,  0), new TimeOnly(17,  0)),
+                ("MSEI",  "Metropolitan Stock Exchange of India",      new TimeOnly(9, 15), new TimeOnly(15, 30)),
+            };
+
+            var toAdd = defs
+                .Where(d => !existingCodes.Contains(d.Code))
+                .Select(d => new Exchange
+                {
+                    ExchangeId = Guid.NewGuid(), TenantId = tenantId,
+                    ExchangeCode = d.Code, ExchangeName = d.Name,
+                    Country = "India", TimeZone = "Asia/Kolkata",
+                    TradingStartTime = d.Start, TradingEndTime = d.End,
+                    IsActive = true, CreatedAt = now, CreatedBy = "seed",
+                })
+                .ToList();
+
+            if (toAdd.Count > 0)
+            {
+                await db.Exchanges.AddRangeAsync(toAdd);
+                await db.SaveChangesAsync();
+            }
+        }
+
+        // ── Segments — idempotent per code ────────────────────────────────────
+        {
+            var existingCodes = (await db.Segments
+                .Where(s => s.TenantId == tenantId)
+                .Select(s => s.SegmentCode)
+                .ToListAsync())
+                .ToHashSet();
+
+            var defs = new (string Code, string Name, string Desc)[]
+            {
+                ("EQ",   "Equity",                        "Cash equity market"),
+                ("FO",   "Futures & Options",             "Equity futures and options derivatives"),
+                ("CD",   "Currency Derivatives",          "Currency futures and options"),
+                ("COM",  "Commodity",                     "Commodity futures and options"),
+                ("SLB",  "Securities Lending & Borrowing","Stock lending and borrowing market"),
+                ("IRD",  "Interest Rate Derivatives",     "Interest rate futures and options"),
+                ("DEBT", "Debt Market",                   "Government and corporate bond market"),
+                ("SME",  "SME / Emerge",                  "Small and medium enterprises platform"),
+            };
+
+            var toAdd = defs
+                .Where(d => !existingCodes.Contains(d.Code))
+                .Select(d => new Segment
+                {
+                    SegmentId = Guid.NewGuid(), TenantId = tenantId,
+                    SegmentCode = d.Code, SegmentName = d.Name, Description = d.Desc,
+                    IsActive = true, CreatedAt = now, CreatedBy = "seed",
+                })
+                .ToList();
+
+            if (toAdd.Count > 0)
+            {
+                await db.Segments.AddRangeAsync(toAdd);
+                await db.SaveChangesAsync();
+            }
+        }
+
+        // ── Exchange-Segments — idempotent per code ───────────────────────────
+        {
+            var existingCodes = (await db.ExchangeSegments
+                .Where(es => es.TenantId == tenantId)
+                .Select(es => es.ExchangeSegmentCode)
+                .ToListAsync())
+                .ToHashSet();
+
+            // Look up IDs from the DB (handles pre-existing NSE etc.)
+            var exMap = await db.Exchanges
+                .Where(e => e.TenantId == tenantId)
+                .ToDictionaryAsync(e => e.ExchangeCode, e => e.ExchangeId);
+            var segMap = await db.Segments
+                .Where(s => s.TenantId == tenantId)
+                .ToDictionaryAsync(s => s.SegmentCode, s => s.SegmentId);
+
+            // (ExchangeCode, SegmentCode, ESCode, ESName)
+            var defs = new (string Ex, string Seg, string Code, string Name)[]
+            {
+                // NSE
+                ("NSE", "EQ",   "NSE-EQ",    "NSE Equity"),
+                ("NSE", "FO",   "NSE-FO",    "NSE Futures & Options"),
+                ("NSE", "CD",   "NSE-CD",    "NSE Currency Derivatives"),
+                ("NSE", "SLB",  "NSE-SLB",   "NSE Securities Lending & Borrowing"),
+                ("NSE", "IRD",  "NSE-IRD",   "NSE Interest Rate Derivatives"),
+                ("NSE", "DEBT", "NSE-DEBT",  "NSE Debt Market"),
+                ("NSE", "SME",  "NSE-SME",   "NSE SME / Emerge"),
+                // BSE
+                ("BSE", "EQ",   "BSE-EQ",    "BSE Equity"),
+                ("BSE", "FO",   "BSE-FO",    "BSE Futures & Options"),
+                ("BSE", "CD",   "BSE-CD",    "BSE Currency Derivatives"),
+                ("BSE", "SLB",  "BSE-SLB",   "BSE Securities Lending & Borrowing"),
+                ("BSE", "IRD",  "BSE-IRD",   "BSE Interest Rate Derivatives"),
+                ("BSE", "DEBT", "BSE-DEBT",  "BSE Debt Market"),
+                ("BSE", "SME",  "BSE-SME",   "BSE SME"),
+                // MCX
+                ("MCX",   "COM", "MCX-COM",   "MCX Commodity"),
+                // NCDEX
+                ("NCDEX", "COM", "NCDEX-COM", "NCDEX Commodity"),
+                // MSEI
+                ("MSEI",  "EQ",  "MSEI-EQ",  "MSEI Equity"),
+                ("MSEI",  "CD",  "MSEI-CD",  "MSEI Currency Derivatives"),
+            };
+
+            var toAdd = defs
+                .Where(d => !existingCodes.Contains(d.Code)
+                         && exMap.ContainsKey(d.Ex)
+                         && segMap.ContainsKey(d.Seg))
+                .Select(d => new ExchangeSegment
+                {
+                    ExchangeSegmentId = Guid.NewGuid(), TenantId = tenantId,
+                    ExchangeId = exMap[d.Ex], SegmentId = segMap[d.Seg],
+                    ExchangeSegmentCode = d.Code, ExchangeSegmentName = d.Name,
+                    SettlementType = SettlementType.T1,
+                    IsActive = true, CreatedAt = now, CreatedBy = "seed",
+                })
+                .ToList();
+
+            if (toAdd.Count > 0)
+            {
+                await db.ExchangeSegments.AddRangeAsync(toAdd);
+                await db.SaveChangesAsync();
+            }
+        }
+
         // ── Default broker (seed once per tenant) ────────────────────────────
         if (!await db.Brokers.AnyAsync(b => b.TenantId == tenantId))
         {
