@@ -21,7 +21,7 @@ public class GetClientsQueryHandler : IRequestHandler<GetClientsQuery, IEnumerab
     public async Task<IEnumerable<ClientDto>> Handle(GetClientsQuery request, CancellationToken cancellationToken)
     {
         var tenantId = _tenantContext.GetCurrentTenantId();
-        var clients = await _repo.FindAsync(c => c.TenantId == tenantId, cancellationToken);
+        var clients = await _repo.FindAsync(c => c.TenantId == tenantId && !c.IsDeleted, cancellationToken);
         return clients
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)

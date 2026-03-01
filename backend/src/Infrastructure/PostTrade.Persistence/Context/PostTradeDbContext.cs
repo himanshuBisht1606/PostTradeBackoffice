@@ -87,9 +87,9 @@ public class PostTradeDbContext : DbContext
 
         if (tenantId != Guid.Empty)
         {
-            modelBuilder.Entity<Broker>().HasQueryFilter(e => e.TenantId == tenantId);
-            modelBuilder.Entity<Client>().HasQueryFilter(e => e.TenantId == tenantId);
-            modelBuilder.Entity<Branch>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<Broker>().HasQueryFilter(e => e.TenantId == tenantId && !e.IsDeleted);
+            modelBuilder.Entity<Client>().HasQueryFilter(e => e.TenantId == tenantId && !e.IsDeleted);
+            modelBuilder.Entity<Branch>().HasQueryFilter(e => e.TenantId == tenantId && !e.IsDeleted);
             modelBuilder.Entity<ExchangeSegment>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<ClientSegmentActivation>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<ClientNominee>().HasQueryFilter(e => e.TenantId == tenantId);

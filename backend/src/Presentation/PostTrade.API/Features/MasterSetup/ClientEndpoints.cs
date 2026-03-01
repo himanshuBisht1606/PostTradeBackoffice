@@ -58,6 +58,14 @@ public static class ClientEndpoints
                 ApiResponse<OnboardingResultDto>.Ok(result, "Client onboarded successfully"));
         }).WithTags("Clients");
 
+        group.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
+        {
+            var deleted = await sender.Send(new DeleteClientCommand(id), ct);
+            return deleted
+                ? Results.Ok(ApiResponse<string>.Ok("Client deleted", "Client deleted"))
+                : Results.NotFound(ApiResponse<string>.Fail("Client not found"));
+        }).WithTags("Clients");
+
         return group;
     }
 }

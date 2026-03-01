@@ -39,6 +39,14 @@ public static class BranchEndpoints
                 : Results.Ok(ApiResponse<BranchDto>.Ok(result, "Branch updated"));
         }).WithTags("Branches");
 
+        group.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
+        {
+            var deleted = await sender.Send(new DeleteBranchCommand(id), ct);
+            return deleted
+                ? Results.Ok(ApiResponse<string>.Ok("Branch deleted", "Branch deleted"))
+                : Results.NotFound(ApiResponse<string>.Fail("Branch not found"));
+        }).WithTags("Branches");
+
         return group;
     }
 }
