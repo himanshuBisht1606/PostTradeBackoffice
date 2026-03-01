@@ -28,7 +28,7 @@ public class ClientsApiTests : BaseIntegrationTest, IAsyncLifetime
 
     public Task DisposeAsync() => Task.CompletedTask;
 
-    [Fact]
+    [SkippableFact]
     public async Task GetClients_Returns200WithList()
     {
         var response = await Client.GetAsync("/api/clients");
@@ -40,7 +40,7 @@ public class ClientsApiTests : BaseIntegrationTest, IAsyncLifetime
         body.GetProperty("data").ValueKind.Should().Be(JsonValueKind.Array);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task CreateClient_ValidPayload_Returns201WithClient()
     {
         var unique = Guid.NewGuid().ToString("N")[..6].ToUpper();
@@ -62,7 +62,7 @@ public class ClientsApiTests : BaseIntegrationTest, IAsyncLifetime
             .Should().Be($"CLI{unique}");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task CreateClient_WithoutAuth_Returns401()
     {
         Client.DefaultRequestHeaders.Authorization = null;

@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using PostTrade.API;
 using PostTrade.API.Features.Auth;
 using PostTrade.API.Features.MasterSetup;
+using PostTrade.API.Features.ReferenceMaster;
 using PostTrade.API.Features.CorporateActions;
 using PostTrade.API.Features.EOD;
 using PostTrade.API.Features.Ledger;
@@ -25,9 +26,11 @@ using PostTrade.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serialize enums as their string names (e.g. "Pending" instead of 1) across the whole API
+// JSON: serialize enums as strings throughout the API
 builder.Services.ConfigureHttpJsonOptions(options =>
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+{
+    options.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+});
 
 // API Explorer + OpenAPI spec (Swashbuckle generates the JSON; Scalar renders it)
 builder.Services.AddEndpointsApiExplorer();
@@ -161,6 +164,14 @@ app.UseAuthorization();
 // Endpoints — Minimal API
 app.MapGroup("/api/auth").MapAuthEndpoints();
 
+// Reference Data (global)
+app.MapGroup("/api/reference/states").MapStateMasterEndpoints().RequireAuthorization();
+app.MapGroup("/api/reference/banks").MapBankMasterEndpoints().RequireAuthorization();
+app.MapGroup("/api/reference/bank-mappings").MapBankMappingEndpoints().RequireAuthorization();
+app.MapGroup("/api/reference/nsdl-dps").MapNsdlDpMasterEndpoints().RequireAuthorization();
+app.MapGroup("/api/reference/cdsl-dps").MapCdslDpMasterEndpoints().RequireAuthorization();
+app.MapGroup("/api/reference/pin-codes").MapPinCodeMasterEndpoints().RequireAuthorization();
+
 // Master Setup
 app.MapGroup("/api/tenants").MapTenantEndpoints().RequireAuthorization();
 app.MapGroup("/api/brokers").MapBrokerEndpoints().RequireAuthorization();
@@ -169,6 +180,9 @@ app.MapGroup("/api/users").MapUserEndpoints().RequireAuthorization();
 app.MapGroup("/api/roles").MapRoleEndpoints().RequireAuthorization();
 app.MapGroup("/api/exchanges").MapExchangeEndpoints().RequireAuthorization();
 app.MapGroup("/api/segments").MapSegmentEndpoints().RequireAuthorization();
+app.MapGroup("/api/exchange-segments").MapExchangeSegmentEndpoints().RequireAuthorization();
+app.MapGroup("/api/branches").MapBranchEndpoints().RequireAuthorization();
+app.MapGroup("/api/clients").MapClientSegmentEndpoints().RequireAuthorization();
 app.MapGroup("/api/instruments").MapInstrumentEndpoints().RequireAuthorization();
 
 // Trading
@@ -194,11 +208,12 @@ app.MapGroup("/api/eod").MapEodEndpoints().RequireAuthorization();
 // Health check endpoint — used by Kubernetes liveness and readiness probes
 app.MapHealthChecks("/health");
 
-// Seed test data in Development
-if (app.Environment.IsDevelopment())
+// Apply pending migrations and seed initial data
+using (var scope = app.Services.CreateScope())
 {
-    var seederLogger = app.Services.GetRequiredService<ILogger<Program>>();
-    await DatabaseSeeder.SeedAsync(app.Services, seederLogger);
+    var db = scope.ServiceProvider.GetRequiredService<PostTrade.Persistence.Context.PostTradeDbContext>();
+    await db.Database.MigrateAsync();
+    await PostTrade.Persistence.DatabaseSeeder.SeedAsync(db, BCrypt.Net.BCrypt.HashPassword);
 }
 
 app.Run();

@@ -30,6 +30,10 @@ public class ExceptionHandlingMiddleware
         {
             await WriteErrorResponse(context, HttpStatusCode.Unauthorized, ex.Message);
         }
+        catch (InvalidOperationException ex)
+        {
+            await WriteErrorResponse(context, HttpStatusCode.BadRequest, ex.Message);
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled exception occurred.");

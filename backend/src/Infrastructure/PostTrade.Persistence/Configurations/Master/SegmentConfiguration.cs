@@ -13,10 +13,10 @@ public class SegmentConfiguration : IEntityTypeConfiguration<Segment>
 
         builder.Property(s => s.SegmentCode).IsRequired().HasMaxLength(20);
         builder.Property(s => s.SegmentName).IsRequired().HasMaxLength(100);
+        builder.Property(s => s.Description).HasMaxLength(500);
 
-        builder.HasIndex(s => new { s.TenantId, s.ExchangeId, s.SegmentCode }).IsUnique();
+        builder.HasIndex(s => new { s.TenantId, s.SegmentCode }).IsUnique();
 
         builder.HasOne(s => s.Tenant).WithMany().HasForeignKey(s => s.TenantId);
-        builder.HasOne(s => s.Exchange).WithMany(e => e.Segments).HasForeignKey(s => s.ExchangeId);
     }
 }
