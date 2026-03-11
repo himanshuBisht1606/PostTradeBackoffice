@@ -10,9 +10,9 @@ public static class SegmentEndpoints
 {
     public static RouteGroupBuilder MapSegmentEndpoints(this RouteGroupBuilder group)
     {
-        group.MapGet("/", async (ISender sender, CancellationToken ct, Guid? exchangeId = null) =>
+        group.MapGet("/", async (ISender sender, CancellationToken ct) =>
         {
-            var result = await sender.Send(new GetSegmentsQuery(exchangeId), ct);
+            var result = await sender.Send(new GetSegmentsQuery(), ct);
             return Results.Ok(ApiResponse<IEnumerable<SegmentDto>>.Ok(result));
         }).WithTags("Segments");
 

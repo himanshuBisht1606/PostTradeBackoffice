@@ -8,7 +8,7 @@ public class TenantsApiTests : BaseIntegrationTest, IAsyncLifetime
     public async Task InitializeAsync() => await AuthenticateAsync();
     public Task DisposeAsync() => Task.CompletedTask;
 
-    [Fact]
+    [SkippableFact]
     public async Task GetTenants_Returns200WithSeededTenant()
     {
         var response = await Client.GetAsync("/api/tenants");
@@ -24,7 +24,7 @@ public class TenantsApiTests : BaseIntegrationTest, IAsyncLifetime
             t.GetProperty("tenantCode").GetString() == "DEMO");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task CreateTenant_ValidPayload_Returns201WithNewTenant()
     {
         var unique = Guid.NewGuid().ToString("N")[..6].ToUpper();
@@ -44,7 +44,7 @@ public class TenantsApiTests : BaseIntegrationTest, IAsyncLifetime
             .Should().Be($"T{unique}");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task GetTenantById_SeededTenant_Returns200()
     {
         // First get all tenants to find the seeded DEMO tenant's ID
@@ -64,7 +64,7 @@ public class TenantsApiTests : BaseIntegrationTest, IAsyncLifetime
             .Should().Be("DEMO");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task GetTenantById_NonExistentId_Returns404()
     {
         var response = await Client.GetAsync($"/api/tenants/{Guid.NewGuid()}");

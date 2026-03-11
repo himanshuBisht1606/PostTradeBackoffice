@@ -24,6 +24,6 @@ public class GetSegmentByIdQueryHandler : IRequestHandler<GetSegmentByIdQuery, S
         var results = await _repo.FindAsync(s => s.SegmentId == request.SegmentId && s.TenantId == tenantId, cancellationToken);
         var s = results.FirstOrDefault();
         if (s is null) return null;
-        return new SegmentDto(s.SegmentId, s.TenantId, s.ExchangeId, s.SegmentCode, s.SegmentName, s.IsActive);
+        return new SegmentDto(s.SegmentId, s.TenantId, s.SegmentCode, s.SegmentName, s.Description, s.IsActive);
     }
 }

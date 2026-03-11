@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using FluentValidation;
+using PostTrade.Application.Common.Exceptions;
 
 namespace PostTrade.API.Middleware;
 
@@ -26,9 +27,31 @@ public class ExceptionHandlingMiddleware
             await WriteErrorResponse(context, HttpStatusCode.BadRequest, "Validation failed",
                 ex.Errors.Select(e => e.ErrorMessage));
         }
+        catch (DuplicateImportException ex)
+        {
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = (int)HttpStatusCode.Conflict;
+            var payload = new
+            {
+                success = false,
+                message = "Already imported. Delete the batch to reimport.",
+                batchId = ex.ExistingBatchId,
+                errors = Array.Empty<string>()
+            };
+            await context.Response.WriteAsync(JsonSerializer.Serialize(payload,
+                new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }));
+        }
+        catch (PrerequisiteNotMetException ex)
+        {
+            await WriteErrorResponse(context, HttpStatusCode.UnprocessableEntity, ex.Message);
+        }
         catch (UnauthorizedAccessException ex)
         {
             await WriteErrorResponse(context, HttpStatusCode.Unauthorized, ex.Message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            await WriteErrorResponse(context, HttpStatusCode.BadRequest, ex.Message);
         }
         catch (Exception ex)
         {

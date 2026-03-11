@@ -34,16 +34,25 @@ public class UpdateClientCommandHandlerTests
     };
 
     private static UpdateClientCommand ValidCommand(Guid clientId) => new(
-        ClientId:      clientId,
-        ClientName:    "Updated Name",
-        Email:         "new@example.com",
-        Phone:         "9999999999",
-        Status:        ClientStatus.Active,
-        PAN:           null,
-        Address:       "New Address",
-        BankAccountNo: null,
-        BankName:      null,
-        BankIFSC:      null
+        ClientId:       clientId,
+        BranchId:       null,
+        ClientName:     "Updated Name",
+        Email:          "new@example.com",
+        Phone:          "9999999999",
+        Status:         ClientStatus.Active,
+        PAN:            null,
+        Aadhaar:        null,
+        DPId:           null,
+        DematAccountNo: null,
+        Depository:     null,
+        Address:        "New Address",
+        StateCode:      null,
+        StateName:      null,
+        BankAccountNo:  null,
+        BankName:       null,
+        BankIFSC:       null,
+        KYCStatus:      KYCStatus.Pending,
+        RiskCategory:   RiskCategory.Moderate
     );
 
     [Fact]

@@ -5,7 +5,7 @@ using PostTrade.Domain.Entities.MasterData;
 
 namespace PostTrade.Application.Features.MasterSetup.Segments.Queries;
 
-public record GetSegmentsQuery(Guid? ExchangeId = null) : IRequest<IEnumerable<SegmentDto>>;
+public record GetSegmentsQuery : IRequest<IEnumerable<SegmentDto>>;
 
 public class GetSegmentsQueryHandler : IRequestHandler<GetSegmentsQuery, IEnumerable<SegmentDto>>
 {
@@ -21,9 +21,7 @@ public class GetSegmentsQueryHandler : IRequestHandler<GetSegmentsQuery, IEnumer
     public async Task<IEnumerable<SegmentDto>> Handle(GetSegmentsQuery request, CancellationToken cancellationToken)
     {
         var tenantId = _tenantContext.GetCurrentTenantId();
-        var segments = await _repo.FindAsync(s =>
-            s.TenantId == tenantId &&
-            (request.ExchangeId == null || s.ExchangeId == request.ExchangeId), cancellationToken);
-        return segments.Select(s => new SegmentDto(s.SegmentId, s.TenantId, s.ExchangeId, s.SegmentCode, s.SegmentName, s.IsActive));
+        var segments = await _repo.FindAsync(s => s.TenantId == tenantId, cancellationToken);
+        return segments.Select(s => new SegmentDto(s.SegmentId, s.TenantId, s.SegmentCode, s.SegmentName, s.Description, s.IsActive));
     }
 }
