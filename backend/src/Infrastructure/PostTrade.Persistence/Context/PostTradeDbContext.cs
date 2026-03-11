@@ -7,6 +7,7 @@ using PostTrade.Domain.Entities.Ledger;
 using PostTrade.Domain.Entities.Reconciliation;
 using PostTrade.Domain.Entities.CorporateActions;
 using PostTrade.Domain.Entities.Audit;
+using PostTrade.Domain.Entities.PostTradeProcessing;
 using PostTrade.Application.Interfaces;
 
 namespace PostTrade.Persistence.Context;
@@ -73,6 +74,18 @@ public class PostTradeDbContext : DbContext
     // Audit
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+    // Post-Trade Processing — Capital Market File Import
+    public DbSet<CmFileImportBatch> CmFileImportBatches => Set<CmFileImportBatch>();
+    public DbSet<CmFileImportLog> CmFileImportLogs => Set<CmFileImportLog>();
+    public DbSet<CmTrade> CmTrades => Set<CmTrade>();
+    public DbSet<CmBhavCopy> CmBhavCopies => Set<CmBhavCopy>();
+    public DbSet<CmMargin> CmMargins => Set<CmMargin>();
+    public DbSet<CmObligation> CmObligations => Set<CmObligation>();
+    public DbSet<CmStt> CmStts => Set<CmStt>();
+    public DbSet<CmStampDuty> CmStampDuties => Set<CmStampDuty>();
+    public DbSet<CmSettlementMaster> CmSettlementMasters => Set<CmSettlementMaster>();
+    public DbSet<CmScripMaster> CmScripMasters => Set<CmScripMaster>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -101,6 +114,17 @@ public class PostTradeDbContext : DbContext
             modelBuilder.Entity<Position>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<SettlementBatch>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<LedgerEntry>().HasQueryFilter(e => e.TenantId == tenantId);
+
+            // Post-Trade Processing
+            modelBuilder.Entity<CmFileImportBatch>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmTrade>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmBhavCopy>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmMargin>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmObligation>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmStt>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmStampDuty>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmSettlementMaster>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmScripMaster>().HasQueryFilter(e => e.TenantId == tenantId);
         }
     }
 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PostTrade.Persistence.Context;
@@ -11,9 +12,11 @@ using PostTrade.Persistence.Context;
 namespace PostTrade.Persistence.Migrations
 {
     [DbContext(typeof(PostTradeDbContext))]
-    partial class PostTradeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260306161652_AddCmFileImportTables")]
+    partial class AddCmFileImportTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2604,152 +2607,6 @@ namespace PostTrade.Persistence.Migrations
                     b.HasIndex("TenantId", "BatchId", "ClntId");
 
                     b.ToTable("CmObligations", "post_trade");
-                });
-
-            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmScripMaster", b =>
-                {
-                    b.Property<Guid>("CmScripMasterId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Exchange")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<decimal>("FaceValue")
-                        .HasColumnType("decimal(10,4)");
-
-                    b.Property<string>("ISIN")
-                        .IsRequired()
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)");
-
-                    b.Property<string>("InstrumentType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("LotSize")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Series")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("Symbol")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("TickSize")
-                        .HasColumnType("decimal(10,4)");
-
-                    b.Property<DateOnly>("TradingDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
-                    b.HasKey("CmScripMasterId");
-
-                    b.HasIndex("TenantId", "Exchange", "TradingDate");
-
-                    b.HasIndex("TenantId", "Exchange", "TradingDate", "ISIN")
-                        .IsUnique();
-
-                    b.ToTable("CmScripMasters", "post_trade");
-                });
-
-            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmSettlementMaster", b =>
-                {
-                    b.Property<Guid>("CmSettlementMasterId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("CreatedBy")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Exchange")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateOnly>("PayInDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateOnly>("PayOutDate")
-                        .HasColumnType("date");
-
-                    b.Property<string>("SettlementNo")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("SettlementType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateOnly>("TradingDate")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("text");
-
-                    b.HasKey("CmSettlementMasterId");
-
-                    b.HasIndex("TenantId", "Exchange", "TradingDate", "SettlementNo")
-                        .IsUnique();
-
-                    b.ToTable("CmSettlementMasters", "post_trade");
                 });
 
             modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmStampDuty", b =>

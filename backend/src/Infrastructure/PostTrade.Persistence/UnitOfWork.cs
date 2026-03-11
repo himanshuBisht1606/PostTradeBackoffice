@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using PostTrade.Application.Interfaces;
 using PostTrade.Persistence.Context;
@@ -44,5 +46,10 @@ public class UnitOfWork : IUnitOfWork
             await _transaction.DisposeAsync();
             _transaction = null;
         }
+    }
+
+    public async Task<int> ExecuteDeleteAsync<T>(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default) where T : class
+    {
+        return await _context.Set<T>().Where(predicate).ExecuteDeleteAsync(cancellationToken);
     }
 }
