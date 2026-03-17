@@ -29,6 +29,16 @@ using PostTrade.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Allow large file uploads (FO Contract Master: ~34 MB, NSE ~99K rows)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 150_000_000; // 150 MB
+});
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 150_000_000; // 150 MB
+});
+
 // JSON: serialize enums as strings throughout the API
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
