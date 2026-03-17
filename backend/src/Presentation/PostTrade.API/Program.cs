@@ -242,6 +242,7 @@ app.MapGroup("/api/eod").MapEodEndpoints().RequireAuthorization();
 
 // Post-Trade Processing — Capital Market File Import
 app.MapGroup("/api/post-trade/cm").MapCmFileImportEndpoints().RequireAuthorization();
+app.MapGroup("/api/post-trade/fo").MapFoFileImportEndpoints().RequireAuthorization();
 
 // Health check endpoint — used by Kubernetes liveness and readiness probes
 app.MapHealthChecks("/health");

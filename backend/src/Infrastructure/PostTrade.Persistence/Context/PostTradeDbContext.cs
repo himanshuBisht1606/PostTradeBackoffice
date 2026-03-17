@@ -86,6 +86,16 @@ public class PostTradeDbContext : DbContext
     public DbSet<CmSettlementMaster> CmSettlementMasters => Set<CmSettlementMaster>();
     public DbSet<CmScripMaster> CmScripMasters => Set<CmScripMaster>();
 
+    // Post-Trade Processing — Futures & Options (NFO / BFO) File Import
+    public DbSet<FoFileImportBatch> FoFileImportBatches => Set<FoFileImportBatch>();
+    public DbSet<FoFileImportLog> FoFileImportLogs => Set<FoFileImportLog>();
+    public DbSet<FoTrade> FoTrades => Set<FoTrade>();
+    public DbSet<FoBhavCopy> FoBhavCopies => Set<FoBhavCopy>();
+    public DbSet<FoStt> FoStts => Set<FoStt>();
+    public DbSet<FoStampDuty> FoStampDuties => Set<FoStampDuty>();
+    public DbSet<FoPosition> FoPositions => Set<FoPosition>();
+    public DbSet<FoContractMaster> FoContractMasters => Set<FoContractMaster>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -125,6 +135,15 @@ public class PostTradeDbContext : DbContext
             modelBuilder.Entity<CmStampDuty>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<CmSettlementMaster>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<CmScripMaster>().HasQueryFilter(e => e.TenantId == tenantId);
+
+            // FO
+            modelBuilder.Entity<FoFileImportBatch>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoTrade>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoBhavCopy>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoStt>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoStampDuty>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoPosition>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoContractMaster>().HasQueryFilter(e => e.TenantId == tenantId);
         }
     }
 
