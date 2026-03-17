@@ -25,6 +25,8 @@ public class FoSttConfiguration : IEntityTypeConfiguration<FoStt>
         builder.Property(s => s.XpryDt).HasMaxLength(30);
         builder.Property(s => s.OptnTp).HasMaxLength(5);
         builder.Property(s => s.StrkPric).HasColumnType("decimal(18,4)");
+        builder.Property(s => s.ClientName).HasMaxLength(200);
+        builder.Property(s => s.ClientStateCode).HasMaxLength(5);
         builder.Property(s => s.SttlmPric).HasColumnType("decimal(18,4)");
         builder.Property(s => s.TtlBuyTrfVal).HasColumnType("decimal(22,4)");
         builder.Property(s => s.TtlSellTrfVal).HasColumnType("decimal(22,4)");

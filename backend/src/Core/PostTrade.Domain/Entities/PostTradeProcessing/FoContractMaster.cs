@@ -17,6 +17,7 @@ public class FoContractMaster : BaseEntity
 
     // F&O attributes
     public string XpryDt { get; set; } = string.Empty;     // Raw string (epoch or DD-MON-YYYY)
+    public DateOnly? ExpiryDate { get; set; }               // Parsed from XpryDt
     public decimal StrkPric { get; set; }
     public string OptnTp { get; set; } = string.Empty;     // CE | PE | blank (futures)
     public string FinInstrmTp { get; set; } = string.Empty; // IDF/STF/IDO/STO

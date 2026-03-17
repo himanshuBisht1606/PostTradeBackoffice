@@ -113,6 +113,7 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
                     continue;
                 }
 
+                var xpryDt = f[4].Trim();
                 var contract = new FoContractMaster
                 {
                     ContractRowId = Guid.NewGuid(),
@@ -124,7 +125,8 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
                     UndrlygFinInstrmId = f[1].Trim(),
                     FinInstrmNm = f[2].Trim(),
                     TckrSymb = f[3].Trim(),
-                    XpryDt = f[4].Trim(),
+                    XpryDt = xpryDt,
+                    ExpiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt),
                     StrkPric = decimal.TryParse(f[5].Trim(), out var sp) ? sp : 0,
                     OptnTp = f[6].Trim(),
                     MinLot = long.TryParse(f[8].Trim(), out var ml) ? ml : 0,

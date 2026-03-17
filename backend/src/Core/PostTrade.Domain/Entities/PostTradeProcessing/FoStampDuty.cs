@@ -22,8 +22,11 @@ public class FoStampDuty : BaseEntity
     public string FinInstrmTp { get; set; } = string.Empty;
     public string Isin { get; set; } = string.Empty;
     public string? XpryDt { get; set; }
+    public DateOnly? ExpiryDate { get; set; }               // Parsed from XpryDt
     public decimal StrkPric { get; set; }
     public string OptnTp { get; set; } = string.Empty;
+    public string? ClientName { get; set; }
+    public string? ClientStateCode { get; set; }            // For GST calculation
 
     // Volumes & values
     public long TtlBuyTradgVol { get; set; }

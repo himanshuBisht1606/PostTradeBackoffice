@@ -21,9 +21,12 @@ public class FoPosition : BaseEntity
     public string Isin { get; set; } = string.Empty;
     public string TckrSymb { get; set; } = string.Empty;
     public string? XpryDt { get; set; }
+    public DateOnly? ExpiryDate { get; set; }               // Parsed from XpryDt
     public decimal StrkPric { get; set; }
     public string OptnTp { get; set; } = string.Empty;
     public long NewBrdLotQty { get; set; }
+    public string? ClientName { get; set; }
+    public string? ClientStateCode { get; set; }            // For GST calculation
 
     // Long/short positions
     public long OpngLngQty { get; set; }

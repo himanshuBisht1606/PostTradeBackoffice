@@ -101,6 +101,8 @@ public class ImportFoBhavCopyCommandHandler : IRequestHandler<ImportFoBhavCopyCo
                     continue;
                 }
 
+                var finInstrmTp = f[4].Trim();
+                var xpryDt = f[9].Trim();
                 var row = new FoBhavCopy
                 {
                     BhavCopyRowId = Guid.NewGuid(),
@@ -110,12 +112,14 @@ public class ImportFoBhavCopyCommandHandler : IRequestHandler<ImportFoBhavCopyCo
                     Exchange = request.Exchange,
                     Sgmt = f[2].Trim(),
                     Src = f[3].Trim(),
-                    FinInstrmTp = f[4].Trim(),
+                    FinInstrmTp = finInstrmTp,
+                    InstrumentType = ImportFoTradeFileCommandHandler.MapInstrumentType(finInstrmTp),
                     FinInstrmId = f[5].Trim(),
                     Isin = f[6].Trim(),
                     TckrSymb = f[7].Trim(),
                     SctySrs = f[8].Trim(),
-                    XpryDt = f[9].Trim(),
+                    XpryDt = xpryDt,
+                    ExpiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt),
                     StrkPric = decimal.TryParse(f[11].Trim(), out var sp) ? sp : 0,
                     OptnTp = f[12].Trim(),
                     FinInstrmNm = f[13].Trim(),

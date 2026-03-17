@@ -24,6 +24,7 @@ public class FoBhavCopyConfiguration : IEntityTypeConfiguration<FoBhavCopy>
         builder.Property(b => b.StrkPric).HasColumnType("decimal(18,4)");
         builder.Property(b => b.OptnTp).HasMaxLength(5);
         builder.Property(b => b.FinInstrmNm).HasMaxLength(100);
+        builder.Property(b => b.InstrumentType).HasMaxLength(30);
         builder.Property(b => b.OpnPric).HasColumnType("decimal(18,4)");
         builder.Property(b => b.HghPric).HasColumnType("decimal(18,4)");
         builder.Property(b => b.LwPric).HasColumnType("decimal(18,4)");

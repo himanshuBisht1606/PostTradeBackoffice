@@ -85,8 +85,21 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
         await _batchRepo.AddAsync(batch, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+        // Build client lookup: clientCode → (ClientId, ClientName, StateCode)
         var clients = await _clientRepo.GetAllAsync(cancellationToken);
-        var clientMap = clients.ToDictionary(c => c.ClientCode, c => c.ClientId, StringComparer.OrdinalIgnoreCase);
+        var clientMap = clients.ToDictionary(
+            c => c.ClientCode,
+            c => (c.ClientId, c.ClientName, c.StateCode),
+            StringComparer.OrdinalIgnoreCase);
+
+        // Build contract master lookup by FinInstrmId for enrichment (lot size, underlying)
+        var contracts = await _contractMasterRepo.FindAsync(
+            c => c.TenantId == tenantId && c.Exchange == request.Exchange && c.TradingDate == request.TradingDate,
+            cancellationToken);
+        var contractMap = contracts.ToDictionary(
+            c => c.FinInstrmId,
+            c => c,
+            StringComparer.OrdinalIgnoreCase);
 
         var errors = new List<ImportErrorDto>();
         var logs = new List<FoFileImportLog>();
@@ -120,9 +133,35 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
                 }
 
                 var clntId = f[18].Trim();
-                clientMap.TryGetValue(clntId, out var clientId);
-                if (clientId == Guid.Empty && !string.IsNullOrEmpty(clntId))
+                string? clientName = null;
+                string? clientStateCode = null;
+                Guid? clientId = null;
+
+                if (!string.IsNullOrEmpty(clntId) && clientMap.TryGetValue(clntId, out var clientInfo))
+                {
+                    clientId = clientInfo.ClientId;
+                    clientName = clientInfo.ClientName;
+                    clientStateCode = clientInfo.StateCode;
+                }
+                else if (!string.IsNullOrEmpty(clntId))
+                {
                     logs.Add(new FoFileImportLog { LogId = Guid.NewGuid(), BatchId = batch.BatchId, RowNumber = rowNum, Level = "Warning", Message = $"Client '{clntId}' not found in master" });
+                }
+
+                // Contract master enrichment
+                var finInstrmId = f[8].Trim();
+                long lotSize = 0;
+                string underlyingSymbol = string.Empty;
+                contractMap.TryGetValue(finInstrmId, out var contract);
+                if (contract != null)
+                {
+                    lotSize = contract.NewBrdLotQty > 0 ? contract.NewBrdLotQty : contract.MinLot;
+                    underlyingSymbol = contract.UndrlygFinInstrmId;
+                }
+
+                var tradQty = long.TryParse(f[25].Trim(), out var qty) ? qty : 0;
+                var pric = decimal.TryParse(f[27].Trim(), out var p) ? p : 0m;
+                var finInstrmTp = f[7].Trim();
 
                 var trade = new FoTrade
                 {
@@ -135,23 +174,31 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
                     Src = f[3].Trim(),
                     Exchange = request.Exchange,
                     TradngMmbId = f[6].Trim(),
-                    FinInstrmTp = f[7].Trim(),
-                    FinInstrmId = f[8].Trim(),
+                    FinInstrmTp = finInstrmTp,
+                    FinInstrmId = finInstrmId,
                     Isin = f[9].Trim(),
                     TckrSymb = f[10].Trim(),
                     XpryDt = f[12].Trim(),
+                    ExpiryDate = ParseExpiryDate(f[12].Trim()),
                     StrkPric = decimal.TryParse(f[14].Trim(), out var sp) ? sp : 0,
                     OptnTp = f[15].Trim(),
                     FinInstrmNm = f[16].Trim(),
+                    InstrumentType = MapInstrumentType(finInstrmTp),
+                    UnderlyingSymbol = underlyingSymbol,
+                    LotSize = lotSize,
                     ClntTp = f[17].Trim(),
                     ClntId = clntId,
-                    ClientId = clientId == Guid.Empty ? null : clientId,
+                    ClientId = clientId,
+                    ClientName = clientName,
+                    ClientStateCode = clientStateCode,
                     SttlmTp = f[22].Trim(),
                     SctiesSttlmTxId = f[23].Trim(),
                     BuySellInd = f[24].Trim(),
-                    TradQty = long.TryParse(f[25].Trim(), out var qty) ? qty : 0,
+                    TradQty = tradQty,
                     NewBrdLotQty = long.TryParse(f[26].Trim(), out var lot) ? lot : 0,
-                    Pric = decimal.TryParse(f[27].Trim(), out var pric) ? pric : 0
+                    Pric = pric,
+                    TradeValue = tradQty * pric,
+                    NumLots = lotSize > 0 ? Math.Round((decimal)tradQty / lotSize, 4) : 0
                 };
 
                 chunk.Add(trade);
@@ -201,4 +248,36 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
 
         return new ImportResultDto(created, skipped, errors);
     }
+
+    internal static DateOnly? ParseExpiryDate(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+
+        // NSE format: Unix epoch milliseconds (e.g. "1743446400000")
+        if (long.TryParse(raw, out var epoch))
+            return DateOnly.FromDateTime(DateTimeOffset.FromUnixTimeMilliseconds(epoch).UtcDateTime);
+
+        // BSE format: DD-MON-YYYY (e.g. "31-MAR-2026")
+        if (DateOnly.TryParseExact(raw, "dd-MMM-yyyy",
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out var d))
+            return d;
+
+        // DD-MMM-YY
+        if (DateOnly.TryParseExact(raw, "dd-MMM-yy",
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out var d2))
+            return d2;
+
+        return null;
+    }
+
+    internal static string MapInstrumentType(string finInstrmTp) => finInstrmTp.ToUpperInvariant() switch
+    {
+        "IDF" => "Index Future",
+        "STF" => "Stock Future",
+        "IDO" => "Index Option",
+        "STO" => "Stock Option",
+        _ => finInstrmTp
+    };
 }

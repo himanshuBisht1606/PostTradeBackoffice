@@ -24,10 +24,18 @@ public class FoTrade : BaseEntity
     public string OptnTp { get; set; } = string.Empty;         // CE | PE | blank(futures)
     public string FinInstrmNm { get; set; } = string.Empty;    // e.g. BANKNIFTY26MARFUT
 
+    // F&O enriched fields
+    public DateOnly? ExpiryDate { get; set; }                   // Parsed from XpryDt
+    public string InstrumentType { get; set; } = string.Empty;  // Index Future/Stock Future/Index Option/Stock Option
+    public long LotSize { get; set; }                           // From contract master
+    public string UnderlyingSymbol { get; set; } = string.Empty; // Underlying (e.g. NIFTY, RELIANCE)
+
     // Client
     public string ClntTp { get; set; } = string.Empty;         // C=Client, P=Prop
     public string ClntId { get; set; } = string.Empty;
     public Guid? ClientId { get; set; }
+    public string? ClientName { get; set; }
+    public string? ClientStateCode { get; set; }                // For GST calculation
 
     // Trade details
     public string BuySellInd { get; set; } = string.Empty;     // B | S
@@ -36,6 +44,10 @@ public class FoTrade : BaseEntity
     public decimal Pric { get; set; }
     public string SttlmTp { get; set; } = string.Empty;
     public string SctiesSttlmTxId { get; set; } = string.Empty;
+
+    // Calculated values
+    public decimal TradeValue { get; set; }                     // TradQty * Pric
+    public decimal NumLots { get; set; }                        // TradQty / LotSize
 
     public virtual FoFileImportBatch Batch { get; set; } = null!;
 }

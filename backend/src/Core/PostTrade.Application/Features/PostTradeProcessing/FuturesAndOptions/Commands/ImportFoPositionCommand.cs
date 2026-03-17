@@ -74,7 +74,10 @@ public class ImportFoPositionCommandHandler : IRequestHandler<ImportFoPositionCo
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var clients = await _clientRepo.GetAllAsync(cancellationToken);
-        var clientMap = clients.ToDictionary(c => c.ClientCode, c => c.ClientId, StringComparer.OrdinalIgnoreCase);
+        var clientMap = clients.ToDictionary(
+            c => c.ClientCode,
+            c => (c.ClientId, c.ClientName, c.StateCode),
+            StringComparer.OrdinalIgnoreCase);
 
         var errors = new List<ImportErrorDto>();
         var logs = new List<FoFileImportLog>();
@@ -119,10 +122,21 @@ public class ImportFoPositionCommandHandler : IRequestHandler<ImportFoPositionCo
                     continue;
                 }
 
-                clientMap.TryGetValue(clntId, out var clientId);
-                if (clientId == Guid.Empty)
+                Guid? clientId = null;
+                string? clientName = null;
+                string? clientStateCode = null;
+                if (clientMap.TryGetValue(clntId, out var clientInfo))
+                {
+                    clientId = clientInfo.ClientId;
+                    clientName = clientInfo.ClientName;
+                    clientStateCode = clientInfo.StateCode;
+                }
+                else
+                {
                     logs.Add(new FoFileImportLog { LogId = Guid.NewGuid(), BatchId = batch.BatchId, RowNumber = rowNum, Level = "Warning", Message = $"Client '{clntId}' not found in master" });
+                }
 
+                var xpryDt = f[12].Trim();
                 var pos = new FoPosition
                 {
                     PositionRowId = Guid.NewGuid(),
@@ -136,11 +150,14 @@ public class ImportFoPositionCommandHandler : IRequestHandler<ImportFoPositionCo
                     TradngMmbId = f[6].Trim(),
                     ClntTp = f[7].Trim(),
                     ClntId = clntId,
-                    ClientId = clientId == Guid.Empty ? null : clientId,
+                    ClientId = clientId,
+                    ClientName = clientName,
+                    ClientStateCode = clientStateCode,
                     FinInstrmTp = f[9].Trim(),
                     Isin = f[10].Trim(),
                     TckrSymb = f[11].Trim(),
-                    XpryDt = f[12].Trim(),
+                    XpryDt = xpryDt,
+                    ExpiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt),
                     StrkPric = decimal.TryParse(f[14].Trim(), out var sp) ? sp : 0,
                     OptnTp = f[15].Trim(),
                     NewBrdLotQty = long.TryParse(f[16].Trim(), out var lot) ? lot : 0,

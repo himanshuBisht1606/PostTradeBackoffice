@@ -25,6 +25,8 @@ public class FoPositionConfiguration : IEntityTypeConfiguration<FoPosition>
         builder.Property(p => p.XpryDt).HasMaxLength(30);
         builder.Property(p => p.StrkPric).HasColumnType("decimal(18,4)");
         builder.Property(p => p.OptnTp).HasMaxLength(5);
+        builder.Property(p => p.ClientName).HasMaxLength(200);
+        builder.Property(p => p.ClientStateCode).HasMaxLength(5);
         builder.Property(p => p.OpngLngVal).HasColumnType("decimal(22,4)");
         builder.Property(p => p.OpngShrtVal).HasColumnType("decimal(22,4)");
         builder.Property(p => p.OpnBuyTradgVal).HasColumnType("decimal(22,4)");

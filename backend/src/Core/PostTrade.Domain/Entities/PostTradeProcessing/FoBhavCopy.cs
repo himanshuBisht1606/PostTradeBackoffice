@@ -16,9 +16,11 @@ public class FoBhavCopy : BaseEntity
     public string TckrSymb { get; set; } = string.Empty;
     public string SctySrs { get; set; } = string.Empty;
     public string? XpryDt { get; set; }
+    public DateOnly? ExpiryDate { get; set; }               // Parsed from XpryDt
     public decimal StrkPric { get; set; }
     public string OptnTp { get; set; } = string.Empty;      // CE | PE | blank
     public string FinInstrmNm { get; set; } = string.Empty;
+    public string InstrumentType { get; set; } = string.Empty; // Index Future/Stock Future/Index Option/Stock Option
 
     // OHLC + settlement
     public decimal OpnPric { get; set; }

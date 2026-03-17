@@ -25,12 +25,18 @@ public class FoTradeConfiguration : IEntityTypeConfiguration<FoTrade>
         builder.Property(t => t.StrkPric).HasColumnType("decimal(18,4)");
         builder.Property(t => t.OptnTp).HasMaxLength(5);
         builder.Property(t => t.FinInstrmNm).HasMaxLength(100);
+        builder.Property(t => t.InstrumentType).HasMaxLength(30);
+        builder.Property(t => t.UnderlyingSymbol).HasMaxLength(50);
         builder.Property(t => t.ClntTp).HasMaxLength(5);
         builder.Property(t => t.ClntId).HasMaxLength(20);
+        builder.Property(t => t.ClientName).HasMaxLength(200);
+        builder.Property(t => t.ClientStateCode).HasMaxLength(5);
         builder.Property(t => t.BuySellInd).HasMaxLength(5);
         builder.Property(t => t.Pric).HasColumnType("decimal(18,4)");
         builder.Property(t => t.SttlmTp).HasMaxLength(20);
         builder.Property(t => t.SctiesSttlmTxId).HasMaxLength(50);
+        builder.Property(t => t.TradeValue).HasColumnType("decimal(22,4)");
+        builder.Property(t => t.NumLots).HasColumnType("decimal(18,4)");
 
         builder.HasIndex(t => new { t.TenantId, t.BatchId, t.UniqueTradeId });
         builder.HasIndex(t => new { t.TenantId, t.TradDt, t.Exchange, t.TckrSymb });
