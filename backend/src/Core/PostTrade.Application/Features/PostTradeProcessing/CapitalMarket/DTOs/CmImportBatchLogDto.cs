@@ -8,3 +8,17 @@ public record CmImportBatchLogDto(
     string Message,
     string? RawData
 );
+
+public record CmImportBatchLogSummaryItemDto(
+    string Level,
+    string Message,
+    int Count
+);
+
+public record CmImportBatchLogsPagedDto(
+    IEnumerable<CmImportBatchLogSummaryItemDto> Summary,
+    IEnumerable<CmImportBatchLogDto> Items,
+    int TotalCount,
+    int Page,
+    int PageSize
+);

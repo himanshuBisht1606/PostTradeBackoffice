@@ -98,7 +98,7 @@ public class ImportCmTradeFileCommandHandler : IRequestHandler<ImportCmTradeFile
 
         // Load client map: ClientCode → ClientId
         var clients = await _clientRepo.GetAllAsync(cancellationToken);
-        var clientMap = clients.ToDictionary(c => c.ClientCode, c => c.ClientId, StringComparer.OrdinalIgnoreCase);
+        var clientMap = clients.Where(c => !string.IsNullOrEmpty(c.ClientCode)).ToDictionary(c => c.ClientCode!, c => c.ClientId, StringComparer.OrdinalIgnoreCase);
 
         var errors = new List<ImportErrorDto>();
         var logs = new List<CmFileImportLog>();

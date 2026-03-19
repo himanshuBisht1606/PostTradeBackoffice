@@ -20,6 +20,7 @@ public class ImportFoBhavCopyCommandHandler : IRequestHandler<ImportFoBhavCopyCo
 {
     private readonly IRepository<FoFileImportBatch> _batchRepo;
     private readonly IRepository<FoBhavCopy> _bhavRepo;
+    private readonly IRepository<FoDailyMarketData> _marketDataRepo;
     private readonly IRepository<FoFileImportLog> _logRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITenantContext _tenantContext;
@@ -28,12 +29,14 @@ public class ImportFoBhavCopyCommandHandler : IRequestHandler<ImportFoBhavCopyCo
     public ImportFoBhavCopyCommandHandler(
         IRepository<FoFileImportBatch> batchRepo,
         IRepository<FoBhavCopy> bhavRepo,
+        IRepository<FoDailyMarketData> marketDataRepo,
         IRepository<FoFileImportLog> logRepo,
         IUnitOfWork unitOfWork,
         ITenantContext tenantContext)
     {
         _batchRepo = batchRepo;
         _bhavRepo = bhavRepo;
+        _marketDataRepo = marketDataRepo;
         _logRepo = logRepo;
         _unitOfWork = unitOfWork;
         _tenantContext = tenantContext;
@@ -72,6 +75,7 @@ public class ImportFoBhavCopyCommandHandler : IRequestHandler<ImportFoBhavCopyCo
         var errors = new List<ImportErrorDto>();
         var logs = new List<FoFileImportLog>();
         var chunk = new List<FoBhavCopy>();
+        var chunkMarket = new List<FoDailyMarketData>();
         int rowNum = 0, created = 0, skipped = 0;
 
         // File columns:
@@ -102,7 +106,14 @@ public class ImportFoBhavCopyCommandHandler : IRequestHandler<ImportFoBhavCopyCo
                 }
 
                 var finInstrmTp = f[4].Trim();
+                var optnTp = f[12].Trim();
                 var xpryDt = f[9].Trim();
+                var expiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt);
+                var contractType = ImportFoTradeFileCommandHandler.MapInstrumentType(finInstrmTp);
+                var optionType = ImportFoTradeFileCommandHandler.ResolveOptionType(optnTp);
+                var lotSize = f.Length > 28 && long.TryParse(f[28].Trim(), out var ls) ? ls : 0L;
+
+                // ── Staging row ───────────────────────────────────────────────
                 var row = new FoBhavCopy
                 {
                     BhavCopyRowId = Guid.NewGuid(),
@@ -113,15 +124,15 @@ public class ImportFoBhavCopyCommandHandler : IRequestHandler<ImportFoBhavCopyCo
                     Sgmt = f[2].Trim(),
                     Src = f[3].Trim(),
                     FinInstrmTp = finInstrmTp,
-                    InstrumentType = ImportFoTradeFileCommandHandler.MapInstrumentType(finInstrmTp),
+                    InstrumentType = contractType,
                     FinInstrmId = f[5].Trim(),
                     Isin = f[6].Trim(),
                     TckrSymb = f[7].Trim(),
                     SctySrs = f[8].Trim(),
                     XpryDt = xpryDt,
-                    ExpiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt),
+                    ExpiryDate = expiryDate,
                     StrkPric = decimal.TryParse(f[11].Trim(), out var sp) ? sp : 0,
-                    OptnTp = f[12].Trim(),
+                    OptnTp = optnTp,
                     FinInstrmNm = f[13].Trim(),
                     OpnPric = decimal.TryParse(f[14].Trim(), out var op) ? op : 0,
                     HghPric = decimal.TryParse(f[15].Trim(), out var hp) ? hp : 0,
@@ -136,18 +147,53 @@ public class ImportFoBhavCopyCommandHandler : IRequestHandler<ImportFoBhavCopyCo
                     TtlTradgVol = long.TryParse(f[24].Trim(), out var vol) ? vol : 0,
                     TtlTrfVal = decimal.TryParse(f[25].Trim(), out var tv) ? tv : 0,
                     TtlNbOfTxsExctd = f.Length > 26 && long.TryParse(f[26].Trim(), out var nb) ? nb : 0,
-                    NewBrdLotQty = f.Length > 28 && long.TryParse(f[28].Trim(), out var lot) ? lot : 0
+                    NewBrdLotQty = lotSize
+                };
+
+                // ── Structured row ────────────────────────────────────────────
+                var marketData = new FoDailyMarketData
+                {
+                    Id = Guid.NewGuid(),
+                    BatchId = batch.BatchId,
+                    TenantId = tenantId,
+                    TradeDate = request.TradingDate,
+                    Exchange = request.Exchange,
+                    InstrumentId = row.FinInstrmId,
+                    Symbol = row.TckrSymb,
+                    InstrumentName = row.FinInstrmNm,
+                    ContractType = contractType,
+                    Isin = row.Isin,
+                    ExpiryDate = expiryDate,
+                    StrikePrice = row.StrkPric,
+                    OptionType = optionType,
+                    LotSize = lotSize,
+                    OpenPrice = row.OpnPric,
+                    HighPrice = row.HghPric,
+                    LowPrice = row.LwPric,
+                    ClosePrice = row.ClsPric,
+                    LastTradedPrice = row.LastPric,
+                    PreviousClose = row.PrvsClsgPric,
+                    UnderlyingPrice = row.UndrlygPric,
+                    SettlementPrice = row.SttlmPric,
+                    OpenInterest = row.OpnIntrst,
+                    OpenInterestChange = row.ChngInOpnIntrst,
+                    TotalVolume = row.TtlTradgVol,
+                    TotalTurnover = row.TtlTrfVal,
+                    TotalTrades = row.TtlNbOfTxsExctd
                 };
 
                 chunk.Add(row);
+                chunkMarket.Add(marketData);
                 created++;
 
                 if (chunk.Count >= BatchSize)
                 {
                     await _bhavRepo.AddRangeAsync(chunk, cancellationToken);
+                    await _marketDataRepo.AddRangeAsync(chunkMarket, cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                     _unitOfWork.ClearTracking();
                     chunk.Clear();
+                    chunkMarket.Clear();
                 }
             }
             catch (Exception ex)
@@ -162,6 +208,7 @@ public class ImportFoBhavCopyCommandHandler : IRequestHandler<ImportFoBhavCopyCo
         if (chunk.Count > 0)
         {
             await _bhavRepo.AddRangeAsync(chunk, cancellationToken);
+            await _marketDataRepo.AddRangeAsync(chunkMarket, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             _unitOfWork.ClearTracking();
         }

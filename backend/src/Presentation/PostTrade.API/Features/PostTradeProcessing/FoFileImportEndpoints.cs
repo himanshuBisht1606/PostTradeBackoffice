@@ -119,10 +119,11 @@ public static class FoFileImportEndpoints
         })
         .WithTags("FO File Import");
 
-        group.MapGet("/import/batches/{id:guid}/logs", async (Guid id, ISender sender, CancellationToken ct) =>
+        group.MapGet("/import/batches/{id:guid}/logs", async (Guid id, ISender sender, CancellationToken ct,
+            int page = 1, int pageSize = 50) =>
         {
-            var result = await sender.Send(new GetFoImportBatchLogsQuery(id), ct);
-            return Results.Ok(ApiResponse<IEnumerable<FoImportBatchLogDto>>.Ok(result));
+            var result = await sender.Send(new GetFoImportBatchLogsQuery(id, page, pageSize), ct);
+            return Results.Ok(ApiResponse<FoImportBatchLogsPagedDto>.Ok(result));
         })
         .WithTags("FO File Import");
 

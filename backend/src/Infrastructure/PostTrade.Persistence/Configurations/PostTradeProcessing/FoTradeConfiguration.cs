@@ -29,6 +29,8 @@ public class FoTradeConfiguration : IEntityTypeConfiguration<FoTrade>
         builder.Property(t => t.UnderlyingSymbol).HasMaxLength(50);
         builder.Property(t => t.ClntTp).HasMaxLength(5);
         builder.Property(t => t.ClntId).HasMaxLength(20);
+        builder.Property(t => t.CtclId).HasMaxLength(30);
+        builder.Property(t => t.OrgnlCtdnPtcptId).HasMaxLength(30);
         builder.Property(t => t.ClientName).HasMaxLength(200);
         builder.Property(t => t.ClientStateCode).HasMaxLength(5);
         builder.Property(t => t.BuySellInd).HasMaxLength(5);

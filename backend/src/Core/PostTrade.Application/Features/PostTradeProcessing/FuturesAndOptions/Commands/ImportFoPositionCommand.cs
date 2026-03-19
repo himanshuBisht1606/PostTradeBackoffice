@@ -21,6 +21,7 @@ public class ImportFoPositionCommandHandler : IRequestHandler<ImportFoPositionCo
 {
     private readonly IRepository<FoFileImportBatch> _batchRepo;
     private readonly IRepository<FoPosition> _positionRepo;
+    private readonly IRepository<FoClientPositionBook> _positionBookRepo;
     private readonly IRepository<FoFileImportLog> _logRepo;
     private readonly IRepository<Client> _clientRepo;
     private readonly IUnitOfWork _unitOfWork;
@@ -30,6 +31,7 @@ public class ImportFoPositionCommandHandler : IRequestHandler<ImportFoPositionCo
     public ImportFoPositionCommandHandler(
         IRepository<FoFileImportBatch> batchRepo,
         IRepository<FoPosition> positionRepo,
+        IRepository<FoClientPositionBook> positionBookRepo,
         IRepository<FoFileImportLog> logRepo,
         IRepository<Client> clientRepo,
         IUnitOfWork unitOfWork,
@@ -37,6 +39,7 @@ public class ImportFoPositionCommandHandler : IRequestHandler<ImportFoPositionCo
     {
         _batchRepo = batchRepo;
         _positionRepo = positionRepo;
+        _positionBookRepo = positionBookRepo;
         _logRepo = logRepo;
         _clientRepo = clientRepo;
         _unitOfWork = unitOfWork;
@@ -74,14 +77,17 @@ public class ImportFoPositionCommandHandler : IRequestHandler<ImportFoPositionCo
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var clients = await _clientRepo.GetAllAsync(cancellationToken);
-        var clientMap = clients.ToDictionary(
-            c => c.ClientCode,
-            c => (c.ClientId, c.ClientName, c.StateCode),
-            StringComparer.OrdinalIgnoreCase);
+        var clientMap = clients
+            .Where(c => !string.IsNullOrEmpty(c.ClientCode))
+            .ToDictionary(
+                c => c.ClientCode!,
+                c => (c.ClientId, c.ClientName, c.StateCode),
+                StringComparer.OrdinalIgnoreCase);
 
         var errors = new List<ImportErrorDto>();
         var logs = new List<FoFileImportLog>();
         var chunk = new List<FoPosition>();
+        var chunkBook = new List<FoClientPositionBook>();
         int rowNum = 0, created = 0, skipped = 0;
 
         // File columns:
@@ -136,7 +142,16 @@ public class ImportFoPositionCommandHandler : IRequestHandler<ImportFoPositionCo
                     logs.Add(new FoFileImportLog { LogId = Guid.NewGuid(), BatchId = batch.BatchId, RowNumber = rowNum, Level = "Warning", Message = $"Client '{clntId}' not found in master" });
                 }
 
+                var finInstrmTp = f[9].Trim();
+                var optnTp = f[15].Trim();
                 var xpryDt = f[12].Trim();
+                var expiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt);
+                var contractType = ImportFoTradeFileCommandHandler.MapInstrumentType(finInstrmTp);
+                var optionType = ImportFoTradeFileCommandHandler.ResolveOptionType(optnTp);
+                var lotSize = long.TryParse(f[16].Trim(), out var ls) ? ls : 0L;
+                var strikePrice = decimal.TryParse(f[14].Trim(), out var sp) ? sp : 0m;
+
+                // ── Staging row ───────────────────────────────────────────────
                 var pos = new FoPosition
                 {
                     PositionRowId = Guid.NewGuid(),
@@ -153,14 +168,14 @@ public class ImportFoPositionCommandHandler : IRequestHandler<ImportFoPositionCo
                     ClientId = clientId,
                     ClientName = clientName,
                     ClientStateCode = clientStateCode,
-                    FinInstrmTp = f[9].Trim(),
+                    FinInstrmTp = finInstrmTp,
                     Isin = f[10].Trim(),
                     TckrSymb = f[11].Trim(),
                     XpryDt = xpryDt,
-                    ExpiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt),
-                    StrkPric = decimal.TryParse(f[14].Trim(), out var sp) ? sp : 0,
-                    OptnTp = f[15].Trim(),
-                    NewBrdLotQty = long.TryParse(f[16].Trim(), out var lot) ? lot : 0,
+                    ExpiryDate = expiryDate,
+                    StrkPric = strikePrice,
+                    OptnTp = optnTp,
+                    NewBrdLotQty = lotSize,
                     OpngLngQty = long.TryParse(f[17].Trim(), out var olq) ? olq : 0,
                     OpngLngVal = decimal.TryParse(f[18].Trim(), out var olv) ? olv : 0,
                     OpngShrtQty = long.TryParse(f[19].Trim(), out var osq) ? osq : 0,
@@ -187,15 +202,67 @@ public class ImportFoPositionCommandHandler : IRequestHandler<ImportFoPositionCo
                     ExrcAssgndVal = f.Length > 40 && decimal.TryParse(f[40].Trim(), out var eav) ? eav : 0
                 };
 
+                // ── Structured row ────────────────────────────────────────────
+                var posBook = new FoClientPositionBook
+                {
+                    Id = Guid.NewGuid(),
+                    BatchId = batch.BatchId,
+                    TenantId = tenantId,
+                    TradeDate = request.TradingDate,
+                    Exchange = request.Exchange,
+                    SegmentIndicator = pos.Sgmt,
+                    ClearingMemberId = pos.ClrMmbId,
+                    BrokerId = pos.TradngMmbId,
+                    ClientType = pos.ClntTp,
+                    ClientCode = clntId,
+                    ClientId = clientId,
+                    ClientName = clientName,
+                    ClientStateCode = clientStateCode,
+                    Symbol = pos.TckrSymb,
+                    ContractType = contractType,
+                    Isin = pos.Isin,
+                    ExpiryDate = expiryDate,
+                    StrikePrice = strikePrice,
+                    OptionType = optionType,
+                    LotSize = lotSize,
+                    OpenLongQty = pos.OpngLngQty,
+                    OpenLongValue = pos.OpngLngVal,
+                    OpenShortQty = pos.OpngShrtQty,
+                    OpenShortValue = pos.OpngShrtVal,
+                    DayBuyQty = pos.OpnBuyTradgQty,
+                    DayBuyValue = pos.OpnBuyTradgVal,
+                    DaySellQty = pos.OpnSellTradgQty,
+                    DaySellValue = pos.OpnSellTradgVal,
+                    PreExerciseLongQty = pos.PreExrcAssgndLngQty,
+                    PreExerciseLongValue = pos.PreExrcAssgndLngVal,
+                    PreExerciseShortQty = pos.PreExrcAssgndShrtQty,
+                    PreExerciseShortValue = pos.PreExrcAssgndShrtVal,
+                    ExercisedQty = pos.ExrcdQty,
+                    AssignedQty = pos.AssgndQty,
+                    PostExerciseLongQty = pos.PstExrcAssgndLngQty,
+                    PostExerciseLongValue = pos.PstExrcAssgndLngVal,
+                    PostExerciseShortQty = pos.PstExrcAssgndShrtQty,
+                    PostExerciseShortValue = pos.PstExrcAssgndShrtVal,
+                    SettlementPrice = pos.SttlmPric,
+                    ReferenceRate = pos.RefRate,
+                    PremiumAmount = pos.PrmAmt,
+                    DailyMtmSettlement = pos.DalyMrkToMktSettlmVal,
+                    FuturesFinalSettlement = pos.FutrsFnlSttlmVal,
+                    ExerciseAssignmentValue = pos.ExrcAssgndVal
+                };
+
                 chunk.Add(pos);
+                chunkBook.Add(posBook);
                 created++;
 
                 if (chunk.Count >= BatchSize)
                 {
                     await _positionRepo.AddRangeAsync(chunk, cancellationToken);
+                    await _positionBookRepo.AddRangeAsync(chunkBook, cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                     _unitOfWork.ClearTracking();
                     chunk.Clear();
+                    chunkBook.Clear();
                 }
             }
             catch (Exception ex)
@@ -210,6 +277,7 @@ public class ImportFoPositionCommandHandler : IRequestHandler<ImportFoPositionCo
         if (chunk.Count > 0)
         {
             await _positionRepo.AddRangeAsync(chunk, cancellationToken);
+            await _positionBookRepo.AddRangeAsync(chunkBook, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             _unitOfWork.ClearTracking();
         }

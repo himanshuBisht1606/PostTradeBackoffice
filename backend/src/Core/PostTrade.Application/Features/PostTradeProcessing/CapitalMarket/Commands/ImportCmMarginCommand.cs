@@ -74,7 +74,7 @@ public class ImportCmMarginCommandHandler : IRequestHandler<ImportCmMarginComman
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var clients = await _clientRepo.GetAllAsync(cancellationToken);
-        var clientMap = clients.ToDictionary(c => c.ClientCode, c => c.ClientId, StringComparer.OrdinalIgnoreCase);
+        var clientMap = clients.Where(c => !string.IsNullOrEmpty(c.ClientCode)).ToDictionary(c => c.ClientCode!, c => c.ClientId, StringComparer.OrdinalIgnoreCase);
 
         var errors = new List<ImportErrorDto>();
         var logs = new List<CmFileImportLog>();

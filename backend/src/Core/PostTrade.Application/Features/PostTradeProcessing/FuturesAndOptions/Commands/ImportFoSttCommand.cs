@@ -21,6 +21,7 @@ public class ImportFoSttCommandHandler : IRequestHandler<ImportFoSttCommand, Imp
 {
     private readonly IRepository<FoFileImportBatch> _batchRepo;
     private readonly IRepository<FoStt> _sttRepo;
+    private readonly IRepository<FoSttLedger> _sttLedgerRepo;
     private readonly IRepository<FoFileImportLog> _logRepo;
     private readonly IRepository<Client> _clientRepo;
     private readonly IUnitOfWork _unitOfWork;
@@ -30,6 +31,7 @@ public class ImportFoSttCommandHandler : IRequestHandler<ImportFoSttCommand, Imp
     public ImportFoSttCommandHandler(
         IRepository<FoFileImportBatch> batchRepo,
         IRepository<FoStt> sttRepo,
+        IRepository<FoSttLedger> sttLedgerRepo,
         IRepository<FoFileImportLog> logRepo,
         IRepository<Client> clientRepo,
         IUnitOfWork unitOfWork,
@@ -37,6 +39,7 @@ public class ImportFoSttCommandHandler : IRequestHandler<ImportFoSttCommand, Imp
     {
         _batchRepo = batchRepo;
         _sttRepo = sttRepo;
+        _sttLedgerRepo = sttLedgerRepo;
         _logRepo = logRepo;
         _clientRepo = clientRepo;
         _unitOfWork = unitOfWork;
@@ -74,14 +77,17 @@ public class ImportFoSttCommandHandler : IRequestHandler<ImportFoSttCommand, Imp
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var clients = await _clientRepo.GetAllAsync(cancellationToken);
-        var clientMap = clients.ToDictionary(
-            c => c.ClientCode,
-            c => (c.ClientId, c.ClientName, c.StateCode),
-            StringComparer.OrdinalIgnoreCase);
+        var clientMap = clients
+            .Where(c => !string.IsNullOrEmpty(c.ClientCode))
+            .ToDictionary(
+                c => c.ClientCode!,
+                c => (c.ClientId, c.ClientName, c.StateCode),
+                StringComparer.OrdinalIgnoreCase);
 
         var errors = new List<ImportErrorDto>();
         var logs = new List<FoFileImportLog>();
         var chunk = new List<FoStt>();
+        var chunkLedger = new List<FoSttLedger>();
         int rowNum = 0, created = 0, skipped = 0;
 
         // File columns (0-indexed):
@@ -115,7 +121,6 @@ public class ImportFoSttCommandHandler : IRequestHandler<ImportFoSttCommand, Imp
                 var rptHdr = f[0].Trim();
 
                 // Only process client-level rows (RptHdr == "30")
-                // Rows 10 (firm total) and 20 (member-level) are summaries, not client detail
                 if (rptHdr != "30")
                 {
                     skipped++;
@@ -143,7 +148,16 @@ public class ImportFoSttCommandHandler : IRequestHandler<ImportFoSttCommand, Imp
                     logs.Add(new FoFileImportLog { LogId = Guid.NewGuid(), BatchId = batch.BatchId, RowNumber = rowNum, Level = "Warning", Message = $"Client '{clntId}' not found in master" });
                 }
 
+                var finInstrmTp = f[14].Trim();
+                var optnTp = f[17].Trim();
                 var xpryDt = f[16].Trim();
+                var expiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt);
+                var contractType = ImportFoTradeFileCommandHandler.MapInstrumentType(finInstrmTp);
+                var optionType = ImportFoTradeFileCommandHandler.ResolveOptionType(optnTp);
+                var strikePrice = decimal.TryParse(f[18].Trim(), out var sp) ? sp : 0m;
+                var settlementPrice = decimal.TryParse(f[19].Trim(), out var sttl) ? sttl : 0m;
+
+                // ── Staging row ───────────────────────────────────────────────
                 var row = new FoStt
                 {
                     SttRowId = Guid.NewGuid(),
@@ -161,13 +175,13 @@ public class ImportFoSttCommandHandler : IRequestHandler<ImportFoSttCommand, Imp
                     ClientName = clientName,
                     ClientStateCode = clientStateCode,
                     TckrSymb = f[11].Trim(),
-                    FinInstrmTp = f[14].Trim(),
+                    FinInstrmTp = finInstrmTp,
                     Isin = f[15].Trim(),
                     XpryDt = xpryDt,
-                    ExpiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt),
-                    OptnTp = f[17].Trim(),
-                    StrkPric = decimal.TryParse(f[18].Trim(), out var sp) ? sp : 0,
-                    SttlmPric = decimal.TryParse(f[19].Trim(), out var sttl) ? sttl : 0,
+                    ExpiryDate = expiryDate,
+                    OptnTp = optnTp,
+                    StrkPric = strikePrice,
+                    SttlmPric = settlementPrice,
                     TtlBuyTradgVol = long.TryParse(f[20].Trim(), out var bvol) ? bvol : 0,
                     TtlBuyTrfVal = decimal.TryParse(f[21].Trim(), out var bval) ? bval : 0,
                     TtlSellTradgVol = long.TryParse(f[22].Trim(), out var svol) ? svol : 0,
@@ -182,15 +196,53 @@ public class ImportFoSttCommandHandler : IRequestHandler<ImportFoSttCommand, Imp
                     TtlTaxs = f.Length > 43 && decimal.TryParse(f[43].Trim(), out var tt) ? tt : 0
                 };
 
+                // ── Structured row ────────────────────────────────────────────
+                var ledger = new FoSttLedger
+                {
+                    Id = Guid.NewGuid(),
+                    BatchId = batch.BatchId,
+                    TenantId = tenantId,
+                    TradeDate = request.TradingDate,
+                    Exchange = request.Exchange,
+                    ClearingMemberId = row.ClrMmbId,
+                    BrokerId = row.TradngMmbId,
+                    ClientCode = clntId,
+                    ClientId = clientId,
+                    ClientName = clientName,
+                    ClientStateCode = clientStateCode,
+                    Symbol = row.TckrSymb,
+                    ContractType = contractType,
+                    Isin = row.Isin,
+                    ExpiryDate = expiryDate,
+                    StrikePrice = strikePrice,
+                    OptionType = optionType,
+                    SettlementPrice = settlementPrice,
+                    TotalBuyQty = row.TtlBuyTradgVol,
+                    TotalBuyValue = row.TtlBuyTrfVal,
+                    TotalSellQty = row.TtlSellTradgVol,
+                    TotalSellValue = row.TtlSellTrfVal,
+                    TaxableSellFuturesValue = row.TaxblSellFutrsVal,
+                    TaxableSellOptionValue = row.TaxblSellOptnVal,
+                    OptionExerciseQty = row.OptnExrcQty,
+                    OptionExerciseValue = row.OptnExrcVal,
+                    TaxableExerciseValue = row.TaxblExrcVal,
+                    FuturesStt = row.FutrsTtlTaxs,
+                    OptionsStt = row.OptnTtlTaxs,
+                    TotalStt = row.TtlTaxs
+                };
+
                 chunk.Add(row);
+                chunkLedger.Add(ledger);
                 created++;
 
                 if (chunk.Count >= BatchSize)
                 {
                     await _sttRepo.AddRangeAsync(chunk, cancellationToken);
+                    await _sttLedgerRepo.AddRangeAsync(chunkLedger, cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                     _unitOfWork.ClearTracking();
                     chunk.Clear();
+                    chunkLedger.Clear();
                 }
             }
             catch (Exception ex)
@@ -205,6 +257,7 @@ public class ImportFoSttCommandHandler : IRequestHandler<ImportFoSttCommand, Imp
         if (chunk.Count > 0)
         {
             await _sttRepo.AddRangeAsync(chunk, cancellationToken);
+            await _sttLedgerRepo.AddRangeAsync(chunkLedger, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             _unitOfWork.ClearTracking();
         }

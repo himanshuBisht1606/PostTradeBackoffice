@@ -40,6 +40,13 @@ public static class ClientEndpoints
                 : Results.Ok(ApiResponse<ClientDetailDto>.Ok(result, "Client updated"));
         }).WithTags("Clients");
 
+        // PATCH /api/clients/{id}/assign-code — ops assigns broker trading code, auto-activates client
+        group.MapPatch("/{id:guid}/assign-code", async (Guid id, AssignCodeRequest req, ISender sender, CancellationToken ct) =>
+        {
+            await sender.Send(new AssignClientCodeCommand(id, req.ClientCode), ct);
+            return Results.Ok(ApiResponse<string>.Ok("Client code assigned and client activated"));
+        }).WithTags("Clients");
+
         // PATCH /api/clients/{id}/status — quick status change
         group.MapPatch("/{id:guid}/status", async (Guid id, ChangeStatusRequest req, ISender sender, CancellationToken ct) =>
         {
@@ -70,4 +77,5 @@ public static class ClientEndpoints
     }
 }
 
+internal record AssignCodeRequest(string ClientCode);
 internal record ChangeStatusRequest(ClientStatus Status);

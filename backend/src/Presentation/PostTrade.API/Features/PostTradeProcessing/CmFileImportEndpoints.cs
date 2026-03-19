@@ -174,10 +174,11 @@ public static class CmFileImportEndpoints
         })
         .WithTags("CM File Import");
 
-        group.MapGet("/import/batches/{id:guid}/logs", async (Guid id, ISender sender, CancellationToken ct) =>
+        group.MapGet("/import/batches/{id:guid}/logs", async (Guid id, ISender sender, CancellationToken ct,
+            int page = 1, int pageSize = 50) =>
         {
-            var result = await sender.Send(new GetCmImportBatchLogsQuery(id), ct);
-            return Results.Ok(ApiResponse<IEnumerable<CmImportBatchLogDto>>.Ok(result));
+            var result = await sender.Send(new GetCmImportBatchLogsQuery(id, page, pageSize), ct);
+            return Results.Ok(ApiResponse<CmImportBatchLogsPagedDto>.Ok(result));
         })
         .WithTags("CM File Import");
 

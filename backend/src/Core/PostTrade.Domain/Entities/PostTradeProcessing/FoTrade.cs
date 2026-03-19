@@ -33,6 +33,8 @@ public class FoTrade : BaseEntity
     // Client
     public string ClntTp { get; set; } = string.Empty;         // C=Client, P=Prop
     public string ClntId { get; set; } = string.Empty;
+    public string? CtclId { get; set; }                        // Exchange unique client terminal ID
+    public string? OrgnlCtdnPtcptId { get; set; }             // Original custodian participant ID (ORGCLENTID)
     public Guid? ClientId { get; set; }
     public string? ClientName { get; set; }
     public string? ClientStateCode { get; set; }                // For GST calculation

@@ -96,6 +96,13 @@ public class PostTradeDbContext : DbContext
     public DbSet<FoPosition> FoPositions => Set<FoPosition>();
     public DbSet<FoContractMaster> FoContractMasters => Set<FoContractMaster>();
 
+    // Post-Trade Processing — FO Structured Tables (populated from staging after import)
+    public DbSet<FoTradeBook> FoTradeBook => Set<FoTradeBook>();
+    public DbSet<FoDailyMarketData> FoDailyMarketData => Set<FoDailyMarketData>();
+    public DbSet<FoClientPositionBook> FoClientPositionBook => Set<FoClientPositionBook>();
+    public DbSet<FoSttLedger> FoSttLedger => Set<FoSttLedger>();
+    public DbSet<FoStampDutyLedger> FoStampDutyLedger => Set<FoStampDutyLedger>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -136,7 +143,7 @@ public class PostTradeDbContext : DbContext
             modelBuilder.Entity<CmSettlementMaster>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<CmScripMaster>().HasQueryFilter(e => e.TenantId == tenantId);
 
-            // FO
+            // FO staging tables
             modelBuilder.Entity<FoFileImportBatch>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<FoTrade>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<FoBhavCopy>().HasQueryFilter(e => e.TenantId == tenantId);
@@ -144,6 +151,13 @@ public class PostTradeDbContext : DbContext
             modelBuilder.Entity<FoStampDuty>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<FoPosition>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<FoContractMaster>().HasQueryFilter(e => e.TenantId == tenantId);
+
+            // FO structured tables
+            modelBuilder.Entity<FoTradeBook>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoDailyMarketData>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoClientPositionBook>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoSttLedger>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoStampDutyLedger>().HasQueryFilter(e => e.TenantId == tenantId);
         }
     }
 

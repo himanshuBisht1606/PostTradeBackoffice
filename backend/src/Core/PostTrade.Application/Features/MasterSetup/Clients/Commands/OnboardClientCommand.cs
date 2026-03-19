@@ -269,7 +269,8 @@ public class OnboardClientCommandHandler : IRequestHandler<OnboardClientCommand,
     {
         var tenantId = _tenantContext.GetCurrentTenantId();
         var clientId = Guid.NewGuid();
-        var clientCode = GenerateClientCode(clientId);
+        var existingCount = (await _clientRepo.FindAsync(c => c.TenantId == tenantId, cancellationToken)).Count();
+        var registrationNumber = $"REG-{(existingCount + 1):D6}";
         var isIndividual = IndividualTypes.Contains(request.Pan.ClientType);
 
         // Resolve broker
@@ -342,11 +343,12 @@ public class OnboardClientCommandHandler : IRequestHandler<OnboardClientCommand,
 
         var client = new Client
         {
-            ClientId     = clientId,
-            TenantId     = tenantId,
-            BrokerId     = brokerId.Value,
-            BranchId     = request.BranchId,
-            ClientCode   = clientCode,
+            ClientId           = clientId,
+            TenantId           = tenantId,
+            BrokerId           = brokerId.Value,
+            BranchId           = request.BranchId,
+            RegistrationNumber = registrationNumber,
+            ClientCode         = null,
             ClientName   = clientName,
             Email        = request.Contact.Email,
             Phone        = request.Contact.Mobile,
@@ -489,11 +491,8 @@ public class OnboardClientCommandHandler : IRequestHandler<OnboardClientCommand,
         // Single SaveChanges — all entities committed atomically
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new OnboardingResultDto(clientId, clientCode);
+        return new OnboardingResultDto(clientId, registrationNumber);
     }
-
-    private static string GenerateClientCode(Guid id) =>
-        $"CLI{id:N}"[..11].ToUpperInvariant();
 
     private static ClientType MapClientType(string raw) => raw switch
     {

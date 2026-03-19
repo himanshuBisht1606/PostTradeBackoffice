@@ -21,6 +21,7 @@ public class ImportFoStampDutyCommandHandler : IRequestHandler<ImportFoStampDuty
 {
     private readonly IRepository<FoFileImportBatch> _batchRepo;
     private readonly IRepository<FoStampDuty> _stampRepo;
+    private readonly IRepository<FoStampDutyLedger> _stampLedgerRepo;
     private readonly IRepository<FoFileImportLog> _logRepo;
     private readonly IRepository<Client> _clientRepo;
     private readonly IUnitOfWork _unitOfWork;
@@ -30,6 +31,7 @@ public class ImportFoStampDutyCommandHandler : IRequestHandler<ImportFoStampDuty
     public ImportFoStampDutyCommandHandler(
         IRepository<FoFileImportBatch> batchRepo,
         IRepository<FoStampDuty> stampRepo,
+        IRepository<FoStampDutyLedger> stampLedgerRepo,
         IRepository<FoFileImportLog> logRepo,
         IRepository<Client> clientRepo,
         IUnitOfWork unitOfWork,
@@ -37,6 +39,7 @@ public class ImportFoStampDutyCommandHandler : IRequestHandler<ImportFoStampDuty
     {
         _batchRepo = batchRepo;
         _stampRepo = stampRepo;
+        _stampLedgerRepo = stampLedgerRepo;
         _logRepo = logRepo;
         _clientRepo = clientRepo;
         _unitOfWork = unitOfWork;
@@ -74,14 +77,17 @@ public class ImportFoStampDutyCommandHandler : IRequestHandler<ImportFoStampDuty
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var clients = await _clientRepo.GetAllAsync(cancellationToken);
-        var clientMap = clients.ToDictionary(
-            c => c.ClientCode,
-            c => (c.ClientId, c.ClientName, c.StateCode),
-            StringComparer.OrdinalIgnoreCase);
+        var clientMap = clients
+            .Where(c => !string.IsNullOrEmpty(c.ClientCode))
+            .ToDictionary(
+                c => c.ClientCode!,
+                c => (c.ClientId, c.ClientName, c.StateCode),
+                StringComparer.OrdinalIgnoreCase);
 
         var errors = new List<ImportErrorDto>();
         var logs = new List<FoFileImportLog>();
         var chunk = new List<FoStampDuty>();
+        var chunkLedger = new List<FoStampDutyLedger>();
         int rowNum = 0, created = 0, skipped = 0;
 
         // File columns:
@@ -143,7 +149,16 @@ public class ImportFoStampDutyCommandHandler : IRequestHandler<ImportFoStampDuty
                     logs.Add(new FoFileImportLog { LogId = Guid.NewGuid(), BatchId = batch.BatchId, RowNumber = rowNum, Level = "Warning", Message = $"Client '{clntId}' not found in master" });
                 }
 
+                var finInstrmTp = f[14].Trim();
+                var optnTp = f[18].Trim();
                 var xpryDt = f[16].Trim();
+                var expiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt);
+                var contractType = ImportFoTradeFileCommandHandler.MapInstrumentType(finInstrmTp);
+                var optionType = ImportFoTradeFileCommandHandler.ResolveOptionType(optnTp);
+                var strikePrice = decimal.TryParse(f[17].Trim(), out var sp) ? sp : 0m;
+                var settlementPrice = f.Length > 29 && decimal.TryParse(f[29].Trim(), out var sttl) ? sttl : 0m;
+
+                // ── Staging row ───────────────────────────────────────────────
                 var row = new FoStampDuty
                 {
                     StampDutyRowId = Guid.NewGuid(),
@@ -162,12 +177,12 @@ public class ImportFoStampDutyCommandHandler : IRequestHandler<ImportFoStampDuty
                     ClientStateCode = clientStateCode,
                     CtrySubDvsn = f[10].Trim(),
                     TckrSymb = f[11].Trim(),
-                    FinInstrmTp = f[14].Trim(),
+                    FinInstrmTp = finInstrmTp,
                     Isin = f[15].Trim(),
                     XpryDt = xpryDt,
-                    ExpiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt),
-                    StrkPric = decimal.TryParse(f[17].Trim(), out var sp) ? sp : 0,
-                    OptnTp = f[18].Trim(),
+                    ExpiryDate = expiryDate,
+                    StrkPric = strikePrice,
+                    OptnTp = optnTp,
                     TtlBuyTradgVol = long.TryParse(f[19].Trim(), out var bvol) ? bvol : 0,
                     TtlBuyTrfVal = decimal.TryParse(f[20].Trim(), out var bval) ? bval : 0,
                     TtlSellTradgVol = long.TryParse(f[21].Trim(), out var svol) ? svol : 0,
@@ -178,21 +193,61 @@ public class ImportFoStampDutyCommandHandler : IRequestHandler<ImportFoStampDuty
                     BuyOthrThanDlvryVal = f.Length > 26 && decimal.TryParse(f[26].Trim(), out var bodv) ? bodv : 0,
                     BuyStmpDty = f.Length > 27 && decimal.TryParse(f[27].Trim(), out var bsd) ? bsd : 0,
                     SellStmpDty = f.Length > 28 && decimal.TryParse(f[28].Trim(), out var ssd) ? ssd : 0,
-                    SttlmPric = f.Length > 29 && decimal.TryParse(f[29].Trim(), out var sttl) ? sttl : 0,
+                    SttlmPric = settlementPrice,
                     BuyDlvryStmpDty = f.Length > 30 && decimal.TryParse(f[30].Trim(), out var bdsd) ? bdsd : 0,
                     BuyOthrThanDlvryStmpDty = f.Length > 31 && decimal.TryParse(f[31].Trim(), out var bodsd) ? bodsd : 0,
                     StmpDtyAmt = f.Length > 32 && decimal.TryParse(f[32].Trim(), out var sda) ? sda : 0
                 };
 
+                // ── Structured row ────────────────────────────────────────────
+                var ledger = new FoStampDutyLedger
+                {
+                    Id = Guid.NewGuid(),
+                    BatchId = batch.BatchId,
+                    TenantId = tenantId,
+                    TradeDate = request.TradingDate,
+                    Exchange = request.Exchange,
+                    ClearingMemberId = row.ClrMmbId,
+                    BrokerId = row.TradngMmbId,
+                    ClientCode = clntId,
+                    ClientId = clientId,
+                    ClientName = clientName,
+                    ClientStateCode = clientStateCode,
+                    StateCode = row.CtrySubDvsn,
+                    Symbol = row.TckrSymb,
+                    ContractType = contractType,
+                    Isin = row.Isin,
+                    ExpiryDate = expiryDate,
+                    StrikePrice = strikePrice,
+                    OptionType = optionType,
+                    SettlementPrice = settlementPrice,
+                    TotalBuyQty = row.TtlBuyTradgVol,
+                    TotalBuyValue = row.TtlBuyTrfVal,
+                    TotalSellQty = row.TtlSellTradgVol,
+                    TotalSellValue = row.TtlSellTrfVal,
+                    DeliveryBuyQty = row.BuyDlvryQty,
+                    DeliveryBuyValue = row.BuyDlvryVal,
+                    NonDeliveryBuyQty = row.BuyOthrThanDlvryQty,
+                    NonDeliveryBuyValue = row.BuyOthrThanDlvryVal,
+                    BuyStampDuty = row.BuyStmpDty,
+                    SellStampDuty = row.SellStmpDty,
+                    DeliveryBuyStampDuty = row.BuyDlvryStmpDty,
+                    NonDeliveryBuyStampDuty = row.BuyOthrThanDlvryStmpDty,
+                    TotalStampDuty = row.StmpDtyAmt
+                };
+
                 chunk.Add(row);
+                chunkLedger.Add(ledger);
                 created++;
 
                 if (chunk.Count >= BatchSize)
                 {
                     await _stampRepo.AddRangeAsync(chunk, cancellationToken);
+                    await _stampLedgerRepo.AddRangeAsync(chunkLedger, cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                     _unitOfWork.ClearTracking();
                     chunk.Clear();
+                    chunkLedger.Clear();
                 }
             }
             catch (Exception ex)
@@ -207,6 +262,7 @@ public class ImportFoStampDutyCommandHandler : IRequestHandler<ImportFoStampDuty
         if (chunk.Count > 0)
         {
             await _stampRepo.AddRangeAsync(chunk, cancellationToken);
+            await _stampLedgerRepo.AddRangeAsync(chunkLedger, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             _unitOfWork.ClearTracking();
         }

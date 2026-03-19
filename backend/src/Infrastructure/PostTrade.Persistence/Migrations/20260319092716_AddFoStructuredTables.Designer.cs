@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PostTrade.Persistence.Context;
@@ -11,9 +12,11 @@ using PostTrade.Persistence.Context;
 namespace PostTrade.Persistence.Migrations
 {
     [DbContext(typeof(PostTradeDbContext))]
-    partial class PostTradeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260319092716_AddFoStructuredTables")]
+    partial class AddFoStructuredTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -784,6 +787,7 @@ namespace PostTrade.Persistence.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("ClientCode")
+                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
@@ -912,11 +916,6 @@ namespace PostTrade.Persistence.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
-                    b.Property<string>("RegistrationNumber")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<string>("ResidentialStatus")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -965,10 +964,6 @@ namespace PostTrade.Persistence.Migrations
                     b.HasIndex("TenantId", "BrokerId");
 
                     b.HasIndex("TenantId", "ClientCode")
-                        .IsUnique()
-                        .HasFilter("\"ClientCode\" IS NOT NULL");
-
-                    b.HasIndex("TenantId", "RegistrationNumber")
                         .IsUnique();
 
                     b.ToTable("Clients", "master");
@@ -3266,10 +3261,6 @@ namespace PostTrade.Persistence.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
-                    b.Property<string>("ContractName")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<string>("ContractType")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -3331,9 +3322,6 @@ namespace PostTrade.Persistence.Migrations
                     b.Property<long>("LotSize")
                         .HasColumnType("bigint");
 
-                    b.Property<decimal>("NetPremium")
-                        .HasColumnType("decimal(18,4)");
-
                     b.Property<long>("OpenLongQty")
                         .HasColumnType("bigint");
 
@@ -3380,10 +3368,6 @@ namespace PostTrade.Persistence.Migrations
 
                     b.Property<decimal>("ReferenceRate")
                         .HasColumnType("decimal(18,4)");
-
-                    b.Property<string>("SegmentIndicator")
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
 
                     b.Property<decimal>("SettlementPrice")
                         .HasColumnType("decimal(18,4)");
@@ -4236,12 +4220,6 @@ namespace PostTrade.Persistence.Migrations
                     b.Property<DateOnly?>("ExpiryDate")
                         .HasColumnType("date");
 
-                    b.Property<decimal>("FuturesExpiryStampDuty")
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal>("FuturesStampDuty")
-                        .HasColumnType("decimal(18,4)");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -4264,12 +4242,6 @@ namespace PostTrade.Persistence.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
-                    b.Property<decimal>("OptionsExpiryStampDuty")
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<decimal>("OptionsStampDuty")
-                        .HasColumnType("decimal(18,4)");
-
                     b.Property<decimal>("SellStampDuty")
                         .HasColumnType("decimal(18,4)");
 
@@ -4280,10 +4252,6 @@ namespace PostTrade.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
-
-                    b.Property<string>("StateName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<decimal>("StrikePrice")
                         .HasColumnType("decimal(18,4)");
@@ -4553,9 +4521,6 @@ namespace PostTrade.Persistence.Migrations
                     b.Property<DateOnly?>("ExpiryDate")
                         .HasColumnType("date");
 
-                    b.Property<decimal>("FuturesExpiryStt")
-                        .HasColumnType("decimal(18,4)");
-
                     b.Property<decimal>("FuturesStt")
                         .HasColumnType("decimal(18,4)");
 
@@ -4577,9 +4542,6 @@ namespace PostTrade.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
-
-                    b.Property<decimal>("OptionsExpiryStt")
-                        .HasColumnType("decimal(18,4)");
 
                     b.Property<decimal>("OptionsStt")
                         .HasColumnType("decimal(18,4)");
@@ -4684,10 +4646,6 @@ namespace PostTrade.Persistence.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("CtclId")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -4743,10 +4701,6 @@ namespace PostTrade.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
-
-                    b.Property<string>("OrgnlCtdnPtcptId")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
 
                     b.Property<decimal>("Pric")
                         .HasColumnType("decimal(18,4)");
@@ -4836,27 +4790,7 @@ namespace PostTrade.Persistence.Migrations
                     b.Property<Guid>("BatchId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("BookType")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("BookTypeName")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("BranchCode")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<string>("BrokerId")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<decimal?>("Brokerage")
-                        .HasColumnType("decimal(18,4)");
-
-                    b.Property<string>("ClearingMemberId")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
@@ -4887,20 +4821,12 @@ namespace PostTrade.Persistence.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
-                    b.Property<string>("CounterpartyCode")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("CreatedBy")
                         .IsRequired()
                         .HasColumnType("text");
-
-                    b.Property<string>("CtclId")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
@@ -4912,9 +4838,6 @@ namespace PostTrade.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
-
-                    b.Property<decimal?>("ExerciseAssignmentPrice")
-                        .HasColumnType("decimal(18,4)");
 
                     b.Property<DateOnly?>("ExpiryDate")
                         .HasColumnType("date");
@@ -4940,13 +4863,6 @@ namespace PostTrade.Persistence.Migrations
                     b.Property<long>("LotSize")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("MarketType")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
-                    b.Property<decimal?>("NetPrice")
-                        .HasColumnType("decimal(18,4)");
-
                     b.Property<decimal>("NumberOfLots")
                         .HasColumnType("decimal(18,4)");
 
@@ -4955,23 +4871,11 @@ namespace PostTrade.Persistence.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
-                    b.Property<string>("OriginalClientId")
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
-
                     b.Property<decimal>("Price")
                         .HasColumnType("decimal(18,4)");
 
                     b.Property<long>("Quantity")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("Segment")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<DateOnly?>("SettlementDate")
-                        .HasColumnType("date");
 
                     b.Property<string>("SettlementTransactionId")
                         .IsRequired()

@@ -8,7 +8,13 @@ public class Client : BaseAuditableEntity
     public Guid TenantId { get; set; }
     public Guid BrokerId { get; set; }
     public Guid? BranchId { get; set; }
-    public string ClientCode { get; set; } = string.Empty;
+
+    /// <summary>Auto-generated at registration. Permanent, never changes.</summary>
+    public string RegistrationNumber { get; set; } = string.Empty;
+
+    /// <summary>Broker-assigned trading code (matches exchange files). Null until ops allocates it.</summary>
+    public string? ClientCode { get; set; }
+
     public string ClientName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;

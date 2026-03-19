@@ -21,6 +21,7 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
 {
     private readonly IRepository<FoFileImportBatch> _batchRepo;
     private readonly IRepository<FoTrade> _tradeRepo;
+    private readonly IRepository<FoTradeBook> _tradeBookRepo;
     private readonly IRepository<FoFileImportLog> _logRepo;
     private readonly IRepository<Client> _clientRepo;
     private readonly IRepository<FoContractMaster> _contractMasterRepo;
@@ -31,6 +32,7 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
     public ImportFoTradeFileCommandHandler(
         IRepository<FoFileImportBatch> batchRepo,
         IRepository<FoTrade> tradeRepo,
+        IRepository<FoTradeBook> tradeBookRepo,
         IRepository<FoFileImportLog> logRepo,
         IRepository<Client> clientRepo,
         IRepository<FoContractMaster> contractMasterRepo,
@@ -39,6 +41,7 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
     {
         _batchRepo = batchRepo;
         _tradeRepo = tradeRepo;
+        _tradeBookRepo = tradeBookRepo;
         _logRepo = logRepo;
         _clientRepo = clientRepo;
         _contractMasterRepo = contractMasterRepo;
@@ -87,10 +90,12 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
 
         // Build client lookup: clientCode → (ClientId, ClientName, StateCode)
         var clients = await _clientRepo.GetAllAsync(cancellationToken);
-        var clientMap = clients.ToDictionary(
-            c => c.ClientCode,
-            c => (c.ClientId, c.ClientName, c.StateCode),
-            StringComparer.OrdinalIgnoreCase);
+        var clientMap = clients
+            .Where(c => !string.IsNullOrEmpty(c.ClientCode))
+            .ToDictionary(
+                c => c.ClientCode!,
+                c => (c.ClientId, c.ClientName, c.StateCode),
+                StringComparer.OrdinalIgnoreCase);
 
         // Build contract master lookup by FinInstrmId for enrichment (lot size, underlying)
         var contracts = await _contractMasterRepo.FindAsync(
@@ -104,13 +109,14 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
         var errors = new List<ImportErrorDto>();
         var logs = new List<FoFileImportLog>();
         var chunk = new List<FoTrade>();
+        var chunkBook = new List<FoTradeBook>();
         int rowNum = 0, created = 0, skipped = 0;
 
-        // File columns:
+        // File columns (NSE/BSE FO trade file):
         // 0=TradDt,1=BizDt,2=Sgmt,3=Src,4=Xchg,5=ClrMmbId,6=Brkr,7=FinInstrmTp,8=FinInstrmId,
-        // 9=ISIN,10=TckrSymb,11=SctySrs,12=XpryDt,13=FininstrmActlXpryDt,14=StrkPric,15=OptnTp,
-        // 16=FinInstrmNm,17=ClntTp,18=ClntId,...,22=SttlmTp,23=SctiesSttlmTxId,
-        // 24=BuySellInd,25=TradQty,26=NewBrdLotQty,27=Pric,28=UnqTradIdr
+        // 9=ISIN,10=TckrSymb,11=SctySrs,12=XpryDt,13=FinInstrmActlXpryDt,14=StrkPric,15=OptnTp,
+        // 16=FinInstrmNm,17=ClntTp,18=ClntId,19=CtclId,20=OrgnlCtdnPtcptId,21=TradDtTm,
+        // 22=SttlmTp,23=SctiesSttlmTxId,24=BuySellInd,25=TradQty,26=NewBrdLotQty,27=Pric,28=UnqTradIdr
         using var reader = new StreamReader(request.FileStream);
         string? line;
         bool isHeader = true;
@@ -162,7 +168,13 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
                 var tradQty = long.TryParse(f[25].Trim(), out var qty) ? qty : 0;
                 var pric = decimal.TryParse(f[27].Trim(), out var p) ? p : 0m;
                 var finInstrmTp = f[7].Trim();
+                var optnTp = f[15].Trim();
+                var contractType = MapInstrumentType(finInstrmTp);
+                var optionType = ResolveOptionType(optnTp);
+                var xpryDt = f[12].Trim();
+                var expiryDate = ParseExpiryDate(xpryDt);
 
+                // ── Staging row (raw exchange field names) ────────────────────
                 var trade = new FoTrade
                 {
                     TradeRowId = Guid.NewGuid(),
@@ -178,16 +190,18 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
                     FinInstrmId = finInstrmId,
                     Isin = f[9].Trim(),
                     TckrSymb = f[10].Trim(),
-                    XpryDt = f[12].Trim(),
-                    ExpiryDate = ParseExpiryDate(f[12].Trim()),
+                    XpryDt = xpryDt,
+                    ExpiryDate = expiryDate,
                     StrkPric = decimal.TryParse(f[14].Trim(), out var sp) ? sp : 0,
-                    OptnTp = f[15].Trim(),
+                    OptnTp = optnTp,
                     FinInstrmNm = f[16].Trim(),
-                    InstrumentType = MapInstrumentType(finInstrmTp),
+                    InstrumentType = contractType,
                     UnderlyingSymbol = underlyingSymbol,
                     LotSize = lotSize,
                     ClntTp = f[17].Trim(),
                     ClntId = clntId,
+                    CtclId = f.Length > 19 ? f[19].Trim() : null,
+                    OrgnlCtdnPtcptId = f.Length > 20 ? f[20].Trim() : null,
                     ClientId = clientId,
                     ClientName = clientName,
                     ClientStateCode = clientStateCode,
@@ -201,15 +215,56 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
                     NumLots = lotSize > 0 ? Math.Round((decimal)tradQty / lotSize, 4) : 0
                 };
 
+                // ── Structured row (descriptive column names) ─────────────────
+                var tradeBook = new FoTradeBook
+                {
+                    Id = Guid.NewGuid(),
+                    BatchId = batch.BatchId,
+                    TenantId = tenantId,
+                    TradeDate = request.TradingDate,
+                    Segment = f[2].Trim(),
+                    Exchange = request.Exchange,
+                    UniqueTradeId = trade.UniqueTradeId,
+                    ClearingMemberId = f[5].Trim(),
+                    BrokerId = trade.TradngMmbId,
+                    InstrumentId = finInstrmId,
+                    Symbol = trade.TckrSymb,
+                    InstrumentName = trade.FinInstrmNm,
+                    ContractType = contractType,
+                    UnderlyingSymbol = underlyingSymbol,
+                    Isin = trade.Isin,
+                    ExpiryDate = expiryDate,
+                    StrikePrice = trade.StrkPric,
+                    OptionType = optionType,
+                    LotSize = lotSize,
+                    ClientType = trade.ClntTp,
+                    ClientCode = clntId,
+                    CtclId = trade.CtclId,
+                    OriginalClientId = trade.OrgnlCtdnPtcptId,
+                    ClientId = clientId,
+                    ClientName = clientName,
+                    ClientStateCode = clientStateCode,
+                    Side = trade.BuySellInd,
+                    Quantity = tradQty,
+                    NumberOfLots = trade.NumLots,
+                    Price = pric,
+                    TradeValue = trade.TradeValue,
+                    SettlementType = trade.SttlmTp,
+                    SettlementTransactionId = trade.SctiesSttlmTxId
+                };
+
                 chunk.Add(trade);
+                chunkBook.Add(tradeBook);
                 created++;
 
                 if (chunk.Count >= BatchSize)
                 {
                     await _tradeRepo.AddRangeAsync(chunk, cancellationToken);
+                    await _tradeBookRepo.AddRangeAsync(chunkBook, cancellationToken);
                     await _unitOfWork.SaveChangesAsync(cancellationToken);
                     _unitOfWork.ClearTracking();
                     chunk.Clear();
+                    chunkBook.Clear();
                 }
             }
             catch (Exception ex)
@@ -224,6 +279,7 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
         if (chunk.Count > 0)
         {
             await _tradeRepo.AddRangeAsync(chunk, cancellationToken);
+            await _tradeBookRepo.AddRangeAsync(chunkBook, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             _unitOfWork.ClearTracking();
         }
@@ -251,33 +307,50 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
 
     internal static DateOnly? ParseExpiryDate(string? raw)
     {
-        if (string.IsNullOrWhiteSpace(raw)) return null;
+        if (string.IsNullOrWhiteSpace(raw) || raw.Trim() == "0") return null;
 
-        // NSE format: Unix epoch milliseconds (e.g. "1743446400000")
-        if (long.TryParse(raw, out var epoch))
-            return DateOnly.FromDateTime(DateTimeOffset.FromUnixTimeMilliseconds(epoch).UtcDateTime);
+        var v = raw.Trim();
+        var ci = System.Globalization.CultureInfo.InvariantCulture;
+        var ns = System.Globalization.DateTimeStyles.None;
 
-        // BSE format: DD-MON-YYYY (e.g. "31-MAR-2026")
-        if (DateOnly.TryParseExact(raw, "dd-MMM-yyyy",
-            System.Globalization.CultureInfo.InvariantCulture,
-            System.Globalization.DateTimeStyles.None, out var d))
-            return d;
+        // NSE: Unix epoch MILLISECONDS — exactly 13 digits (e.g. "1743446400000")
+        if (v.Length == 13 && long.TryParse(v, out var ms))
+            return DateOnly.FromDateTime(DateTimeOffset.FromUnixTimeMilliseconds(ms).UtcDateTime);
 
-        // DD-MMM-YY
-        if (DateOnly.TryParseExact(raw, "dd-MMM-yy",
-            System.Globalization.CultureInfo.InvariantCulture,
-            System.Globalization.DateTimeStyles.None, out var d2))
-            return d2;
+        // NSE: Unix epoch SECONDS — exactly 10 digits (e.g. "1743446400")
+        if (v.Length == 10 && long.TryParse(v, out var sec))
+            return DateOnly.FromDateTime(DateTimeOffset.FromUnixTimeSeconds(sec).UtcDateTime);
+
+        // BSE / common string formats
+        if (DateOnly.TryParseExact(v, "dd-MMM-yyyy", ci, ns, out var d1)) return d1;  // 31-MAR-2026
+        if (DateOnly.TryParseExact(v, "dd-MMM-yy",   ci, ns, out var d2)) return d2;  // 31-MAR-26
+        if (DateOnly.TryParseExact(v, "yyyy-MM-dd",   ci, ns, out var d3)) return d3;  // 2026-03-31
+        if (DateOnly.TryParseExact(v, "dd-MM-yyyy",   ci, ns, out var d4)) return d4;  // 31-03-2026
+        if (DateOnly.TryParseExact(v, "dd/MM/yyyy",   ci, ns, out var d5)) return d5;  // 31/03/2026
+        if (v.Length == 8 &&
+            DateOnly.TryParseExact(v, "yyyyMMdd",     ci, ns, out var d6)) return d6;  // 20260331
 
         return null;
     }
 
+    /// <summary>
+    /// Normalises the exchange instrument-type code to NSE-style short codes.
+    /// NSE already sends FUTIDX/FUTSTK/OPTIDX/OPTSTK; BSE sends IDF/STF/IDO/STO.
+    /// </summary>
     internal static string MapInstrumentType(string finInstrmTp) => finInstrmTp.ToUpperInvariant() switch
     {
-        "IDF" => "Index Future",
-        "STF" => "Stock Future",
-        "IDO" => "Index Option",
-        "STO" => "Stock Option",
-        _ => finInstrmTp
+        "IDF"    => "FUTIDX",   // BSE Index Future
+        "STF"    => "FUTSTK",   // BSE Stock Future
+        "IDO"    => "OPTIDX",   // BSE Index Option
+        "STO"    => "OPTSTK",   // BSE Stock Option
+        "FUTIDX" => "FUTIDX",
+        "FUTSTK" => "FUTSTK",
+        "OPTIDX" => "OPTIDX",
+        "OPTSTK" => "OPTSTK",
+        _        => finInstrmTp.ToUpperInvariant()
     };
+
+    /// <summary>Returns CE | PE | FX — blank option type means it is a futures contract.</summary>
+    internal static string ResolveOptionType(string optnTp) =>
+        string.IsNullOrWhiteSpace(optnTp) ? "FX" : optnTp.Trim().ToUpperInvariant();
 }

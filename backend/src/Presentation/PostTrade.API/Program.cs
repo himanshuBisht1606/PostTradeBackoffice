@@ -11,6 +11,7 @@ using PostTrade.API.Features.ReferenceMaster;
 using PostTrade.API.Features.CorporateActions;
 using PostTrade.API.Features.EOD;
 using PostTrade.API.Features.Ledger;
+using PostTrade.API.Features.Clearing;
 using PostTrade.API.Features.PostTradeProcessing;
 using PostTrade.API.Features.Reconciliation;
 using PostTrade.API.Features.Settlement;
@@ -253,6 +254,9 @@ app.MapGroup("/api/eod").MapEodEndpoints().RequireAuthorization();
 // Post-Trade Processing — Capital Market File Import
 app.MapGroup("/api/post-trade/cm").MapCmFileImportEndpoints().RequireAuthorization();
 app.MapGroup("/api/post-trade/fo").MapFoFileImportEndpoints().RequireAuthorization();
+
+// Clearing — FO Trade Book
+app.MapGroup("/api/clearing/fo/trade-book").MapFoTradeBookEndpoints().RequireAuthorization();
 
 // Health check endpoint — used by Kubernetes liveness and readiness probes
 app.MapHealthChecks("/health");
