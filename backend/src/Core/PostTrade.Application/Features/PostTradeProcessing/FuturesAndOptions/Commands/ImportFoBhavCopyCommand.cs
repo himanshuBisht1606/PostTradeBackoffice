@@ -158,6 +158,7 @@ public class ImportFoBhavCopyCommandHandler : IRequestHandler<ImportFoBhavCopyCo
                     TenantId = tenantId,
                     TradeDate = request.TradingDate,
                     Exchange = request.Exchange,
+                    Segment = f[2].Trim(),
                     InstrumentId = row.FinInstrmId,
                     Symbol = row.TckrSymb,
                     InstrumentName = row.FinInstrmNm,

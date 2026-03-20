@@ -12,6 +12,7 @@ public class FoDailyMarketDataConfiguration : IEntityTypeConfiguration<FoDailyMa
         builder.HasKey(t => t.Id);
 
         builder.Property(t => t.Exchange).IsRequired().HasMaxLength(10);
+        builder.Property(t => t.Segment).HasMaxLength(10);
         builder.Property(t => t.InstrumentId).HasMaxLength(50);
         builder.Property(t => t.Symbol).HasMaxLength(50);
         builder.Property(t => t.InstrumentName).HasMaxLength(100);

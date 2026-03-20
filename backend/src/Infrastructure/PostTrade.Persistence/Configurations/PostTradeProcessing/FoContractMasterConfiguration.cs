@@ -23,6 +23,11 @@ public class FoContractMasterConfiguration : IEntityTypeConfiguration<FoContract
         builder.Property(c => c.FinInstrmTp).HasMaxLength(10);
         builder.Property(c => c.SttlmMtd).HasMaxLength(10);
         builder.Property(c => c.StockNm).HasMaxLength(100);
+        builder.Property(c => c.TickSize).HasColumnType("decimal(18,4)");
+        builder.Property(c => c.BasePric).HasColumnType("decimal(18,4)");
+        builder.Property(c => c.MktTpAndId).HasMaxLength(20);
+        builder.Property(c => c.OptnExrcStyle).HasMaxLength(5);
+        builder.Property(c => c.Isin).HasMaxLength(20);
 
         builder.Property(c => c.RegisteredInstrumentId).IsRequired(false);
 

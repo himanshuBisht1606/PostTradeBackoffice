@@ -5,16 +5,21 @@ public record FoContractMasterDto(
     DateOnly TradingDate,
     string Exchange,
     string FinInstrmId,
+    string UndrlygFinInstrmId,
     string TckrSymb,
-    string FinInstrmNm,
+    string FinInstrmNm,          // Full contract name (e.g. BANKNIFTY26MAR74300CE)
     string XpryDt,
     DateOnly? ExpiryDate,
     decimal StrkPric,
-    string OptnTp,
-    string FinInstrmTp,
+    string OptnTp,               // CE | PE | blank (futures)
+    string FinInstrmTp,          // FUTIDX | FUTSTK | OPTIDX | OPTSTK
+    string? OptnExrcStyle,       // E=European | A=American
     string SttlmMtd,
-    string StockNm,
     long MinLot,
     long NewBrdLotQty,
+    decimal TickSize,            // Bid interval / tick size
+    decimal? BasePric,           // Base/reference price
+    string? MktTpAndId,          // Market type
+    string? Isin,
     Guid? RegisteredInstrumentId
 );

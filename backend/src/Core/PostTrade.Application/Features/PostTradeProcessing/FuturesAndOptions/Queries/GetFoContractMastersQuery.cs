@@ -49,8 +49,10 @@ public class GetFoContractMastersQueryHandler : IRequestHandler<GetFoContractMas
             .Take(request.PageSize)
             .Select(c => new FoContractMasterDto(
                 c.ContractRowId, c.TradingDate, c.Exchange, c.FinInstrmId,
-                c.TckrSymb, c.FinInstrmNm, c.XpryDt, c.ExpiryDate, c.StrkPric, c.OptnTp,
-                c.FinInstrmTp, c.SttlmMtd, c.StockNm, c.MinLot, c.NewBrdLotQty, c.RegisteredInstrumentId))
+                c.UndrlygFinInstrmId, c.TckrSymb, c.FinInstrmNm, c.XpryDt, c.ExpiryDate,
+                c.StrkPric, c.OptnTp, c.FinInstrmTp, c.OptnExrcStyle, c.SttlmMtd,
+                c.MinLot, c.NewBrdLotQty, c.TickSize, c.BasePric, c.MktTpAndId,
+                c.Isin, c.RegisteredInstrumentId))
             .ToList();
     }
 }

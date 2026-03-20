@@ -11,6 +11,7 @@ public class FoDailyMarketData : BaseEntity
 
     public DateOnly TradeDate { get; set; }
     public string Exchange { get; set; } = string.Empty;        // NFO | BFO
+    public string Segment { get; set; } = string.Empty;         // FO
 
     // Instrument
     public string InstrumentId { get; set; } = string.Empty;

@@ -88,10 +88,15 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
         var chunk = new List<FoContractMaster>();
         int rowNum = 0, created = 0, skipped = 0;
 
-        // Key columns (both NSE and BSE share same layout):
-        // 0=FinInstrmId,1=UndrlygFinInstrmId,2=FinInstrmNm,3=TckrSymb,4=XpryDt,
-        // 5=StrkPric,6=OptnTp,8=MinLot,9=NewBrdLotQty,18=StockNm,19=SttlmMtd,
-        // 62=FinInstrmTp (NSE) — BSE has same position
+        // Key columns (both NSE and BSE share the same header layout):
+        // 0=FinInstrmId,1=UndrlygFinInstrmId,2=FinInstrmNm(type code),3=TckrSymb,4=XpryDt,
+        // 5=StrkPric,6=OptnTp,8=MinLot,9=NewBrdLotQty,10=BidIntrvl,
+        // 18=StockNm(NSE: full contract name; BSE: sector code),
+        // 19=SttlmMtd(NSE: C/D; BSE: full contract name),
+        // 20=BasePric(NSE: base price; BSE: delivery flag shifted),
+        // 27=MktTpAndId,60=OptnExrcStyle,110=ISIN
+        // FinInstrmTp is derived from f[2] via MapInstrumentType (NOT f[62] which is ExrcRjctAllwd)
+        bool isNse = request.Exchange == "NFO";
         using var reader = new StreamReader(request.FileStream);
         string? line;
         bool isHeader = true;
@@ -114,6 +119,25 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
                 }
 
                 var xpryDt = f[4].Trim();
+
+                // f[2] holds the exchange-specific type code (e.g. OPTIDX, FUTSTK for NSE; SO, IO, SF for BSE)
+                var finInstrmTp = ImportFoTradeFileCommandHandler.MapInstrumentType(f[2].Trim());
+
+                // Full contract name: NSE stores at f[18] (StockNm column),
+                // BSE shifts it to f[19] (SttlmMtd column)
+                var fullContractName = isNse
+                    ? (f.Length > 18 ? f[18].Trim() : string.Empty)
+                    : (f.Length > 19 ? f[19].Trim() : string.Empty);
+
+                // Settlement method: NSE f[19] = C/D; BSE column is occupied by contract name
+                var sttlmMtd = isNse && f.Length > 19 ? f[19].Trim() : string.Empty;
+
+                // Base price only reliable for NSE (BSE shifts column values in 20-21 range)
+                decimal? basePric = null;
+                if (isNse && f.Length > 20 &&
+                    decimal.TryParse(f[20].Trim(), out var bp) && bp > 0)
+                    basePric = bp;
+
                 var contract = new FoContractMaster
                 {
                     ContractRowId = Guid.NewGuid(),
@@ -123,7 +147,7 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
                     Exchange = request.Exchange,
                     FinInstrmId = f[0].Trim(),
                     UndrlygFinInstrmId = f[1].Trim(),
-                    FinInstrmNm = f[2].Trim(),
+                    FinInstrmNm = fullContractName,
                     TckrSymb = f[3].Trim(),
                     XpryDt = xpryDt,
                     ExpiryDate = ImportFoTradeFileCommandHandler.ParseExpiryDate(xpryDt),
@@ -131,9 +155,14 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
                     OptnTp = f[6].Trim(),
                     MinLot = long.TryParse(f[8].Trim(), out var ml) ? ml : 0,
                     NewBrdLotQty = long.TryParse(f[9].Trim(), out var lot) ? lot : 0,
-                    StockNm = f.Length > 18 ? f[18].Trim() : string.Empty,
-                    SttlmMtd = f.Length > 19 ? f[19].Trim() : string.Empty,
-                    FinInstrmTp = f.Length > 62 ? f[62].Trim() : string.Empty
+                    TickSize = f.Length > 10 && decimal.TryParse(f[10].Trim(), out var ts) ? ts : 0,
+                    StockNm = isNse ? fullContractName : (f.Length > 18 ? f[18].Trim() : string.Empty),
+                    SttlmMtd = sttlmMtd,
+                    BasePric = basePric,
+                    MktTpAndId = f.Length > 27 ? NullIfBlank(f[27]) : null,
+                    OptnExrcStyle = f.Length > 60 ? NullIfBlank(f[60]) : null,
+                    Isin = f.Length > 110 ? NullIfBlank(f[110]) : null,
+                    FinInstrmTp = finInstrmTp
                 };
 
                 chunk.Add(contract);
@@ -183,4 +212,7 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
 
         return new ImportResultDto(created, skipped, errors);
     }
+
+    private static string? NullIfBlank(string s) =>
+        string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }

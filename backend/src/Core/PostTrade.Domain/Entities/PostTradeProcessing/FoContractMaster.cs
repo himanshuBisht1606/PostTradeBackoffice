@@ -28,6 +28,13 @@ public class FoContractMaster : BaseEntity
     public long MinLot { get; set; }
     public long NewBrdLotQty { get; set; }
 
+    // Additional contract attributes
+    public decimal TickSize { get; set; }               // Bid interval / tick size (BidIntrvl f[10])
+    public decimal? BasePric { get; set; }              // Base/reference price (NSE: f[20])
+    public string? MktTpAndId { get; set; }             // Market type and ID (f[27])
+    public string? OptnExrcStyle { get; set; }          // E=European / A=American (f[60])
+    public string? Isin { get; set; }                   // ISIN code (f[110])
+
     // Instrument registration — set when this contract is promoted to a master Instrument
     public Guid? RegisteredInstrumentId { get; set; }
 
