@@ -106,6 +106,21 @@ public static class FoFileImportEndpoints
         })
         .WithTags("FO File Import");
 
+        // GET /api/clearing/fo/contract-book — broker-facing view matching cONTRACT.xls format
+        group.MapGet("/contract-book", async (ISender sender, CancellationToken ct,
+            string? exchange = null,
+            DateOnly? tradingDate = null,
+            string? symbol = null,
+            string? contractType = null,
+            string? optionType = null,
+            int page = 1,
+            int pageSize = 100) =>
+        {
+            var result = await sender.Send(new GetFoContractBookQuery(exchange, tradingDate, symbol, contractType, optionType, page, pageSize), ct);
+            return Results.Ok(ApiResponse<FoContractBookPagedDto>.Ok(result));
+        })
+        .WithTags("FO File Import");
+
         // ── Batch query endpoints ─────────────────────────────────────────────
 
         group.MapGet("/import/batches", async (ISender sender, CancellationToken ct,
