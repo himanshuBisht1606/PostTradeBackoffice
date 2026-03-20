@@ -8,9 +8,13 @@ public record FoContractMasterDto(
     string TckrSymb,
     string FinInstrmNm,
     string XpryDt,
+    DateOnly? ExpiryDate,
     decimal StrkPric,
     string OptnTp,
     string FinInstrmTp,
+    string SttlmMtd,
     string StockNm,
-    long NewBrdLotQty
+    long MinLot,
+    long NewBrdLotQty,
+    Guid? RegisteredInstrumentId
 );

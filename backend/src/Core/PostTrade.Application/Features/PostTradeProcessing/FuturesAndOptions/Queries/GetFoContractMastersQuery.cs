@@ -9,6 +9,8 @@ public record GetFoContractMastersQuery(
     string? Exchange,
     DateOnly? TradingDate,
     string? Symbol,
+    string? ContractType,   // FinInstrmTp: IDF, STF, IDO, STO
+    string? OptionType,     // OptnTp: CE, PE
     int Page = 1,
     int PageSize = 50
 ) : IRequest<IEnumerable<FoContractMasterDto>>;
@@ -36,6 +38,10 @@ public class GetFoContractMastersQueryHandler : IRequestHandler<GetFoContractMas
             query = query.Where(c => c.TradingDate == request.TradingDate.Value);
         if (!string.IsNullOrWhiteSpace(request.Symbol))
             query = query.Where(c => c.TckrSymb.Contains(request.Symbol, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(request.ContractType))
+            query = query.Where(c => c.FinInstrmTp == request.ContractType);
+        if (!string.IsNullOrWhiteSpace(request.OptionType))
+            query = query.Where(c => c.OptnTp == request.OptionType);
 
         return query
             .OrderBy(c => c.TckrSymb)
@@ -43,8 +49,8 @@ public class GetFoContractMastersQueryHandler : IRequestHandler<GetFoContractMas
             .Take(request.PageSize)
             .Select(c => new FoContractMasterDto(
                 c.ContractRowId, c.TradingDate, c.Exchange, c.FinInstrmId,
-                c.TckrSymb, c.FinInstrmNm, c.XpryDt, c.StrkPric, c.OptnTp,
-                c.FinInstrmTp, c.StockNm, c.NewBrdLotQty))
+                c.TckrSymb, c.FinInstrmNm, c.XpryDt, c.ExpiryDate, c.StrkPric, c.OptnTp,
+                c.FinInstrmTp, c.SttlmMtd, c.StockNm, c.MinLot, c.NewBrdLotQty, c.RegisteredInstrumentId))
             .ToList();
     }
 }

@@ -1,5 +1,6 @@
 using MediatR;
 using PostTrade.API.Common;
+using PostTrade.Application.Features.MasterSetup.Instruments.DTOs;
 using PostTrade.Application.Features.PostTradeProcessing.FuturesAndOptions.Commands;
 using PostTrade.Application.Features.PostTradeProcessing.FuturesAndOptions.DTOs;
 using PostTrade.Application.Features.PostTradeProcessing.FuturesAndOptions.Queries;
@@ -95,10 +96,12 @@ public static class FoFileImportEndpoints
             string? exchange = null,
             DateOnly? tradingDate = null,
             string? symbol = null,
+            string? contractType = null,
+            string? optionType = null,
             int page = 1,
             int pageSize = 50) =>
         {
-            var result = await sender.Send(new GetFoContractMastersQuery(exchange, tradingDate, symbol, page, pageSize), ct);
+            var result = await sender.Send(new GetFoContractMastersQuery(exchange, tradingDate, symbol, contractType, optionType, page, pageSize), ct);
             return Results.Ok(ApiResponse<IEnumerable<FoContractMasterDto>>.Ok(result));
         })
         .WithTags("FO File Import");
@@ -124,6 +127,22 @@ public static class FoFileImportEndpoints
         {
             var result = await sender.Send(new GetFoImportBatchLogsQuery(id, page, pageSize), ct);
             return Results.Ok(ApiResponse<FoImportBatchLogsPagedDto>.Ok(result));
+        })
+        .WithTags("FO File Import");
+
+        // ── Register contract as instrument ───────────────────────────────────
+
+        group.MapPost("/contract-masters/{id:guid}/register", async (Guid id, ISender sender, CancellationToken ct) =>
+        {
+            try
+            {
+                var result = await sender.Send(new RegisterFoContractAsInstrumentCommand(id), ct);
+                return Results.Ok(ApiResponse<InstrumentDto>.Ok(result, "Contract registered as instrument"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.Conflict(ApiResponse<string>.Fail(ex.Message));
+            }
         })
         .WithTags("FO File Import");
 

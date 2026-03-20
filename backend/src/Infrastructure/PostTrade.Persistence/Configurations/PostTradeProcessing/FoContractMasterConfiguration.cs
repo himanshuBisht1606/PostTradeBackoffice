@@ -24,6 +24,8 @@ public class FoContractMasterConfiguration : IEntityTypeConfiguration<FoContract
         builder.Property(c => c.SttlmMtd).HasMaxLength(10);
         builder.Property(c => c.StockNm).HasMaxLength(100);
 
+        builder.Property(c => c.RegisteredInstrumentId).IsRequired(false);
+
         builder.HasIndex(c => new { c.TenantId, c.Exchange, c.TradingDate, c.TckrSymb });
     }
 }

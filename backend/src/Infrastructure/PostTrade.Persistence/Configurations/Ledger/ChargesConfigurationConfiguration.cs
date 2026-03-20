@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PostTrade.Domain.Entities.Ledger;
+using PostTrade.Domain.Enums;
 
 namespace PostTrade.Persistence.Configurations.Ledger;
 
@@ -15,7 +16,18 @@ public class ChargesConfigurationEntityConfiguration : IEntityTypeConfiguration<
         builder.Property(c => c.Rate).HasColumnType("decimal(18,6)");
         builder.Property(c => c.MinAmount).HasColumnType("decimal(18,4)");
         builder.Property(c => c.MaxAmount).HasColumnType("decimal(18,4)");
+        builder.Property(c => c.Remarks).HasMaxLength(500);
 
-        builder.HasIndex(c => new { c.TenantId, c.BrokerId, c.ChargeType, c.EffectiveFrom });
+        // New enum columns stored as strings for readability
+        builder.Property(c => c.Segment)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .HasDefaultValue(TradeSegment.All);
+        builder.Property(c => c.ApplicableTo)
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .HasDefaultValue(ChargeApplicableTo.Both);
+
+        builder.HasIndex(c => new { c.TenantId, c.BrokerId, c.ChargeType, c.Segment, c.EffectiveFrom });
     }
 }

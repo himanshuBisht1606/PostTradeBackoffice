@@ -28,5 +28,8 @@ public class FoContractMaster : BaseEntity
     public long MinLot { get; set; }
     public long NewBrdLotQty { get; set; }
 
+    // Instrument registration — set when this contract is promoted to a master Instrument
+    public Guid? RegisteredInstrumentId { get; set; }
+
     public virtual FoFileImportBatch Batch { get; set; } = null!;
 }

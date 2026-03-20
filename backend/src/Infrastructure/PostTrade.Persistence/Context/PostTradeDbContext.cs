@@ -34,6 +34,7 @@ public class PostTradeDbContext : DbContext
     // Master Data
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Broker> Brokers => Set<Broker>();
+    public DbSet<BrokerExchangeMembership> BrokerExchangeMemberships => Set<BrokerExchangeMembership>();
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<ClientNominee> ClientNominees => Set<ClientNominee>();
     public DbSet<ClientFatca> ClientFatcas => Set<ClientFatca>();
