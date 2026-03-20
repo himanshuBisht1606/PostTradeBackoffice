@@ -223,12 +223,15 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
                     MktTpandId = f.Length > 40 ? NullIfBlank(f[40]) : null,
                 };
 
-                // Parse trade datetime for the trade book
+                // Parse trade datetime for the trade book.
+                // Exchange timestamps (e.g. "2026-02-25T09:15:11") carry no timezone suffix.
+                // Npgsql requires DateTimeKind.Utc for timestamptz columns, so we specify Utc.
                 DateTime? tradeDtTm = null;
                 if (!string.IsNullOrWhiteSpace(trade.TradDtTm) &&
                     DateTime.TryParse(trade.TradDtTm, null,
-                        System.Globalization.DateTimeStyles.RoundtripKind, out var parsedDt))
-                    tradeDtTm = parsedDt;
+                        System.Globalization.DateTimeStyles.AssumeUniversal |
+                        System.Globalization.DateTimeStyles.AdjustToUniversal, out var parsedDt))
+                    tradeDtTm = DateTime.SpecifyKind(parsedDt, DateTimeKind.Utc);
 
                 // ── Structured row (descriptive column names) ─────────────────
                 var tradeBook = new FoTradeBook
