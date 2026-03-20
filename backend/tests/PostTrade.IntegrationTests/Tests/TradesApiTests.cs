@@ -64,8 +64,10 @@ public class TradesApiTests : BaseIntegrationTest, IAsyncLifetime
         {
             BrokerCode = $"BR{unique}",
             BrokerName = $"Test Broker {unique}",
+            EntityType = 4,   // PrivateLimited
             ContactEmail = $"broker{unique}@example.com",
-            ContactPhone = "+91-9000000003"
+            ContactPhone = "+91-9000000003",
+            CorrespondenceSameAsRegistered = true
         });
         brokerResponse.EnsureSuccessStatusCode();
         var brokerBody = await brokerResponse.Content.ReadFromJsonAsync<JsonElement>();

@@ -17,8 +17,10 @@ public class ClientsApiTests : BaseIntegrationTest, IAsyncLifetime
         {
             BrokerCode = $"BR{unique}",
             BrokerName = $"Test Broker {unique}",
+            EntityType = 4,   // PrivateLimited
             ContactEmail = $"broker{unique}@example.com",
-            ContactPhone = "+91-9000000001"
+            ContactPhone = "+91-9000000001",
+            CorrespondenceSameAsRegistered = true
         });
 
         brokerResponse.EnsureSuccessStatusCode();
