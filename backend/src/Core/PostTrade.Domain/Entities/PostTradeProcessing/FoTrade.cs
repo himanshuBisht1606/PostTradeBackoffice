@@ -47,6 +47,13 @@ public class FoTrade : BaseEntity
     public string SttlmTp { get; set; } = string.Empty;
     public string SctiesSttlmTxId { get; set; } = string.Empty;
 
+    // Additional exchange file fields
+    public string? TradDtTm { get; set; }                      // Full trade timestamp (TradDtTm)
+    public string? RptdTxSts { get; set; }                     // Reported transaction status: OR=Order, CN=Cancelled
+    public string? OrdrRef { get; set; }                       // Exchange order reference (OrdrRef)
+    public string? SttlmCycl { get; set; }                     // Settlement cycle (e.g. T+1)
+    public string? MktTpandId { get; set; }                    // Market type and ID (MktTpandId)
+
     // Calculated values
     public decimal TradeValue { get; set; }                     // TradQty * Pric
     public decimal NumLots { get; set; }                        // TradQty / LotSize

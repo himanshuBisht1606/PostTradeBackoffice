@@ -42,7 +42,10 @@ public class FoTradeBook : BaseEntity
 
     // Trade execution
     public string Side { get; set; } = string.Empty;           // B = Buy, S = Sell
-    public string? MarketType { get; set; }                     // Normal / Odd Lot / Auction (MKT_TYPE)
+    public DateTime? TradeDateTime { get; set; }                 // Full trade timestamp (TradDtTm → TRADE_TIME)
+    public string? TradeStatus { get; set; }                    // OR=Open/Order, CN=Cancelled (RptdTxSts → TRADESTATUS)
+    public string? OrderRef { get; set; }                       // Exchange order reference (OrdrRef → ORDERNO)
+    public string? MarketType { get; set; }                     // Normal / Odd Lot / Auction (MktTpandId → MKT_TYPE)
     public string? BookType { get; set; }                       // Book type code (BOOKTYPE)
     public string? BookTypeName { get; set; }                   // Book type name (BOOKTYPENAME)
     public long Quantity { get; set; }
@@ -53,6 +56,7 @@ public class FoTradeBook : BaseEntity
     public decimal TradeValue { get; set; }
     public decimal? ExerciseAssignmentPrice { get; set; }       // Exercise/assignment price (EXAS_PRICE)
     public string? CounterpartyCode { get; set; }               // Counterparty/contra code (CONTRA_CODE)
+    public string? Remarks { get; set; }                        // Trade remarks (Rmks → REMARK)
     public string SettlementType { get; set; } = string.Empty;
     public string SettlementTransactionId { get; set; } = string.Empty;
     public DateOnly? SettlementDate { get; set; }               // Actual settlement date (SETTLEMENT_DATE)

@@ -80,9 +80,12 @@ public class GetFoTradeBookQueryHandler : IRequestHandler<GetFoTradeBookQuery, F
     private static FoTradeBookItemDto Map(FoTradeBook t) => new(
         t.Id,
         t.TradeDate,
+        t.TradeDateTime,
         t.Segment,
         t.Exchange,
         t.UniqueTradeId,
+        t.TradeStatus,
+        t.OrderRef,
         t.ClearingMemberId,
         t.BrokerId,
         t.BranchCode,
@@ -101,12 +104,17 @@ public class GetFoTradeBookQueryHandler : IRequestHandler<GetFoTradeBookQuery, F
         t.ClientName,
         t.ClientStateCode,
         t.Side,
+        t.MarketType,
         t.Quantity,
         t.NumberOfLots,
         t.Price,
+        t.NetPrice,
+        t.Brokerage,
         t.TradeValue,
+        t.Remarks,
         t.SettlementType,
         t.SettlementTransactionId,
+        t.SettlementDate,
         t.BatchId
     );
 }

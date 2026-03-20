@@ -37,6 +37,11 @@ public class FoTradeConfiguration : IEntityTypeConfiguration<FoTrade>
         builder.Property(t => t.Pric).HasColumnType("decimal(18,4)");
         builder.Property(t => t.SttlmTp).HasMaxLength(20);
         builder.Property(t => t.SctiesSttlmTxId).HasMaxLength(50);
+        builder.Property(t => t.TradDtTm).HasMaxLength(30);
+        builder.Property(t => t.RptdTxSts).HasMaxLength(10);
+        builder.Property(t => t.OrdrRef).HasMaxLength(50);
+        builder.Property(t => t.SttlmCycl).HasMaxLength(10);
+        builder.Property(t => t.MktTpandId).HasMaxLength(20);
         builder.Property(t => t.TradeValue).HasColumnType("decimal(22,4)");
         builder.Property(t => t.NumLots).HasColumnType("decimal(18,4)");
 

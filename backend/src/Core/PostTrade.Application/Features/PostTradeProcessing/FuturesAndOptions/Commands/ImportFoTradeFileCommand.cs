@@ -112,11 +112,13 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
         var chunkBook = new List<FoTradeBook>();
         int rowNum = 0, created = 0, skipped = 0;
 
-        // File columns (NSE/BSE FO trade file):
+        // File columns (NSE/BSE FO trade file — 46 columns):
         // 0=TradDt,1=BizDt,2=Sgmt,3=Src,4=Xchg,5=ClrMmbId,6=Brkr,7=FinInstrmTp,8=FinInstrmId,
-        // 9=ISIN,10=TckrSymb,11=SctySrs,12=XpryDt,13=FinInstrmActlXpryDt,14=StrkPric,15=OptnTp,
-        // 16=FinInstrmNm,17=ClntTp,18=ClntId,19=CtclId,20=OrgnlCtdnPtcptId,21=TradDtTm,
-        // 22=SttlmTp,23=SctiesSttlmTxId,24=BuySellInd,25=TradQty,26=NewBrdLotQty,27=Pric,28=UnqTradIdr
+        // 9=ISIN,10=TckrSymb,11=SctySrs,12=XpryDt,13=FininstrmActlXpryDt,14=StrkPric,15=OptnTp,
+        // 16=FinInstrmNm,17=ClntTp,18=ClntId,19=FullyExctdConfSnt,20=OrgnlCtdnPtcptId,21=CtdnPtcptId,
+        // 22=SttlmTp,23=SctiesSttlmTxId,24=BuySellInd,25=TradQty,26=NewBrdLotQty,27=Pric,28=UnqTradIdr,
+        // 29=RptdTxSts,30=TradDtTm,31=UpdDt,32=OrdrRef,33=OrdrDtTm,34=InstgUsr,35=CtclId,
+        // 36=TradRegnOrgn,37=OrdrTp,38=BlckDealInd,39=SttlmCycl,40=MktTpandId,41=Rmks,42-45=Rsvd
         using var reader = new StreamReader(request.FileStream);
         string? line;
         bool isHeader = true;
@@ -130,7 +132,7 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
             try
             {
                 var f = CsvParser.ParseLine(line);
-                if (f.Length < 29)
+                if (f.Length < 29)  // minimum required columns
                 {
                     errors.Add(new ImportErrorDto(rowNum, "Insufficient columns"));
                     logs.Add(new FoFileImportLog { LogId = Guid.NewGuid(), BatchId = batch.BatchId, RowNumber = rowNum, Level = "Error", Message = "Insufficient columns", RawData = line[..Math.Min(line.Length, 1000)] });
@@ -200,8 +202,8 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
                     LotSize = lotSize,
                     ClntTp = f[17].Trim(),
                     ClntId = clntId,
-                    CtclId = f.Length > 19 ? f[19].Trim() : null,
-                    OrgnlCtdnPtcptId = f.Length > 20 ? f[20].Trim() : null,
+                    CtclId = f.Length > 35 ? NullIfBlank(f[35]) : null,      // CtclId is at index 35
+                    OrgnlCtdnPtcptId = f.Length > 20 ? NullIfBlank(f[20]) : null,
                     ClientId = clientId,
                     ClientName = clientName,
                     ClientStateCode = clientStateCode,
@@ -212,8 +214,21 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
                     NewBrdLotQty = long.TryParse(f[26].Trim(), out var lot) ? lot : 0,
                     Pric = pric,
                     TradeValue = tradQty * pric,
-                    NumLots = lotSize > 0 ? Math.Round((decimal)tradQty / lotSize, 4) : 0
+                    NumLots = lotSize > 0 ? Math.Round((decimal)tradQty / lotSize, 4) : 0,
+                    // Extended fields
+                    TradDtTm   = f.Length > 30 ? NullIfBlank(f[30]) : null,
+                    RptdTxSts  = f.Length > 29 ? NullIfBlank(f[29]) : null,
+                    OrdrRef    = f.Length > 32 ? NullIfBlank(f[32]) : null,
+                    SttlmCycl  = f.Length > 39 ? NullIfBlank(f[39]) : null,
+                    MktTpandId = f.Length > 40 ? NullIfBlank(f[40]) : null,
                 };
+
+                // Parse trade datetime for the trade book
+                DateTime? tradeDtTm = null;
+                if (!string.IsNullOrWhiteSpace(trade.TradDtTm) &&
+                    DateTime.TryParse(trade.TradDtTm, null,
+                        System.Globalization.DateTimeStyles.RoundtripKind, out var parsedDt))
+                    tradeDtTm = parsedDt;
 
                 // ── Structured row (descriptive column names) ─────────────────
                 var tradeBook = new FoTradeBook
@@ -245,6 +260,11 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
                     ClientName = clientName,
                     ClientStateCode = clientStateCode,
                     Side = trade.BuySellInd,
+                    TradeDateTime = tradeDtTm,
+                    TradeStatus = trade.RptdTxSts,
+                    OrderRef = trade.OrdrRef,
+                    MarketType = trade.MktTpandId,
+                    Remarks = f.Length > 41 ? NullIfBlank(f[41]) : null,
                     Quantity = tradQty,
                     NumberOfLots = trade.NumLots,
                     Price = pric,
@@ -353,4 +373,7 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
     /// <summary>Returns CE | PE | FX — blank option type means it is a futures contract.</summary>
     internal static string ResolveOptionType(string optnTp) =>
         string.IsNullOrWhiteSpace(optnTp) ? "FX" : optnTp.Trim().ToUpperInvariant();
+
+    private static string? NullIfBlank(string s) =>
+        string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 }

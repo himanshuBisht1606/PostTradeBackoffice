@@ -31,6 +31,9 @@ public class FoTradeBookConfiguration : IEntityTypeConfiguration<FoTradeBook>
         builder.Property(t => t.OriginalClientId).HasMaxLength(30);
         builder.Property(t => t.ClientName).HasMaxLength(200);
         builder.Property(t => t.ClientStateCode).HasMaxLength(5);
+        builder.Property(t => t.TradeDateTime);
+        builder.Property(t => t.TradeStatus).HasMaxLength(10);
+        builder.Property(t => t.OrderRef).HasMaxLength(50);
         builder.Property(t => t.Side).HasMaxLength(5);
         builder.Property(t => t.MarketType).HasMaxLength(30);
         builder.Property(t => t.BookType).HasMaxLength(20);
@@ -42,6 +45,7 @@ public class FoTradeBookConfiguration : IEntityTypeConfiguration<FoTradeBook>
         builder.Property(t => t.NumberOfLots).HasColumnType("decimal(18,4)");
         builder.Property(t => t.ExerciseAssignmentPrice).HasColumnType("decimal(18,4)");
         builder.Property(t => t.CounterpartyCode).HasMaxLength(20);
+        builder.Property(t => t.Remarks).HasMaxLength(500);
         builder.Property(t => t.SettlementType).HasMaxLength(20);
         builder.Property(t => t.SettlementTransactionId).HasMaxLength(50);
 
