@@ -61,8 +61,8 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
             throw new PrerequisiteNotMetException(
                 $"FO Contract Master missing for Exchange '{request.Exchange}' on {request.TradingDate:yyyy-MM-dd}. Import the contract master file first.");
 
-        // Duplicate detection
-        var existing = await _batchRepo.FirstOrDefaultAsync(b =>
+        // Re-import: if a completed batch already exists, delete old trades and reuse the batch
+        var existingBatch = await _batchRepo.FirstOrDefaultAsync(b =>
             b.TenantId == tenantId &&
             b.FileType == FoFileType.Trade &&
             b.Exchange == request.Exchange &&
@@ -70,10 +70,23 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
             b.Status == FoImportStatus.Completed,
             cancellationToken);
 
-        if (existing != null)
-            throw new DuplicateImportException(existing.BatchId);
+        if (existingBatch != null)
+        {
+            await _unitOfWork.ExecuteDeleteAsync<FoTrade>(
+                t => t.TenantId == tenantId && t.BatchId == existingBatch.BatchId,
+                cancellationToken);
+            await _unitOfWork.ExecuteDeleteAsync<FoTradeBook>(
+                t => t.TenantId == tenantId && t.BatchId == existingBatch.BatchId,
+                cancellationToken);
 
-        var batch = new FoFileImportBatch
+            existingBatch.Status = FoImportStatus.Processing;
+            existingBatch.FileName = request.FileName;
+            existingBatch.StartedAt = DateTime.UtcNow;
+            existingBatch.CompletedAt = null;
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
+        var batch = existingBatch ?? new FoFileImportBatch
         {
             BatchId = Guid.NewGuid(),
             TenantId = tenantId,
@@ -85,8 +98,12 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
             FileName = request.FileName,
             StartedAt = DateTime.UtcNow
         };
-        await _batchRepo.AddAsync(batch, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        if (existingBatch == null)
+        {
+            await _batchRepo.AddAsync(batch, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
 
         // Build client lookup: clientCode → (ClientId, ClientName, StateCode)
         var clients = await _clientRepo.GetAllAsync(cancellationToken);
