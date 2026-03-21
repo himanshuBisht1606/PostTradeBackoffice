@@ -6,7 +6,7 @@ using PostTrade.Domain.Entities.MasterData;
 
 namespace PostTrade.Application.Features.MasterSetup.Segments.Commands;
 
-public record UpdateSegmentCommand(Guid SegmentId, string SegmentName, bool IsActive) : IRequest<SegmentDto?>;
+public record UpdateSegmentCommand(Guid SegmentId, string SegmentName, string? Description, bool IsActive) : IRequest<SegmentDto?>;
 
 public class UpdateSegmentCommandValidator : AbstractValidator<UpdateSegmentCommand>
 {
@@ -38,12 +38,13 @@ public class UpdateSegmentCommandHandler : IRequestHandler<UpdateSegmentCommand,
         if (segment is null) return null;
 
         segment.SegmentName = request.SegmentName;
+        segment.Description = request.Description;
         segment.IsActive = request.IsActive;
 
         await _repo.UpdateAsync(segment, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return new SegmentDto(segment.SegmentId, segment.TenantId, segment.ExchangeId,
-            segment.SegmentCode, segment.SegmentName, segment.IsActive);
+        return new SegmentDto(segment.SegmentId, segment.TenantId,
+            segment.SegmentCode, segment.SegmentName, segment.Description, segment.IsActive);
     }
 }

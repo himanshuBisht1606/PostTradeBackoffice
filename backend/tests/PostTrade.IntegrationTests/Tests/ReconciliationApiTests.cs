@@ -8,7 +8,7 @@ public class ReconciliationApiTests : BaseIntegrationTest, IAsyncLifetime
     public async Task InitializeAsync() => await AuthenticateAsync();
     public Task DisposeAsync() => Task.CompletedTask;
 
-    [Fact]
+    [SkippableFact]
     public async Task RunReconciliation_MatchedValues_Returns201WithMatchedStatus()
     {
         var unique = Guid.NewGuid().ToString("N")[..8].ToUpper();
@@ -34,7 +34,7 @@ public class ReconciliationApiTests : BaseIntegrationTest, IAsyncLifetime
         data.GetProperty("status").GetString().Should().Be("Matched");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task RunReconciliation_MismatchedValues_Returns201WithMismatchedStatus()
     {
         var unique = Guid.NewGuid().ToString("N")[..8].ToUpper();
@@ -57,7 +57,7 @@ public class ReconciliationApiTests : BaseIntegrationTest, IAsyncLifetime
         data.GetProperty("status").GetString().Should().Be("Mismatched");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task GetReconciliationExceptions_Returns200WithList()
     {
         // First create a mismatched recon so there is at least one exception

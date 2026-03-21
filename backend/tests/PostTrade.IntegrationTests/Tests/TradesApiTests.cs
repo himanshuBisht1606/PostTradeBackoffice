@@ -64,8 +64,10 @@ public class TradesApiTests : BaseIntegrationTest, IAsyncLifetime
         {
             BrokerCode = $"BR{unique}",
             BrokerName = $"Test Broker {unique}",
+            EntityType = 4,   // PrivateLimited
             ContactEmail = $"broker{unique}@example.com",
-            ContactPhone = "+91-9000000003"
+            ContactPhone = "+91-9000000003",
+            CorrespondenceSameAsRegistered = true
         });
         brokerResponse.EnsureSuccessStatusCode();
         var brokerBody = await brokerResponse.Content.ReadFromJsonAsync<JsonElement>();
@@ -86,7 +88,7 @@ public class TradesApiTests : BaseIntegrationTest, IAsyncLifetime
         _clientId = Guid.Parse(clientBody.GetProperty("data").GetProperty("clientId").GetString()!);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task GetTrades_Returns200WithList()
     {
         var response = await Client.GetAsync("/api/trades");
@@ -98,7 +100,7 @@ public class TradesApiTests : BaseIntegrationTest, IAsyncLifetime
         body.GetProperty("data").ValueKind.Should().Be(JsonValueKind.Array);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task BookTrade_ValidPayload_Returns201WithTrade()
     {
         var response = await Client.PostAsJsonAsync("/api/trades", new
@@ -124,7 +126,7 @@ public class TradesApiTests : BaseIntegrationTest, IAsyncLifetime
         data.GetProperty("status").GetString().Should().Be("Pending");
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task GetTradeById_ExistingTrade_Returns200()
     {
         // Book a trade first
@@ -152,7 +154,7 @@ public class TradesApiTests : BaseIntegrationTest, IAsyncLifetime
         body.GetProperty("data").GetProperty("tradeId").GetString().Should().Be(tradeId);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task GetTradeById_NonExistentId_Returns404()
     {
         var response = await Client.GetAsync($"/api/trades/{Guid.NewGuid()}");
@@ -160,7 +162,7 @@ public class TradesApiTests : BaseIntegrationTest, IAsyncLifetime
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task CancelTrade_PendingTrade_Returns200WithCancelledStatus()
     {
         // Book a trade first

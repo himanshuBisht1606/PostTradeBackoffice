@@ -46,9 +46,10 @@ public static class LedgerEndpoints
             ISender sender,
             CancellationToken ct,
             ChargeType? chargeType = null,
+            TradeSegment? segment = null,
             bool? isActive = null) =>
         {
-            var result = await sender.Send(new GetChargesConfigQuery(chargeType, isActive), ct);
+            var result = await sender.Send(new GetChargesConfigQuery(chargeType, segment, isActive), ct);
             return Results.Ok(ApiResponse<IEnumerable<ChargesConfigDto>>.Ok(result));
         }).WithTags("Ledger");
 
@@ -58,6 +59,34 @@ public static class LedgerEndpoints
             return Results.Created(
                 $"/api/ledger/charges/{result.ChargesConfigId}",
                 ApiResponse<ChargesConfigDto>.Ok(result, "Charges configuration created"));
+        }).WithTags("Ledger");
+
+        charges.MapPut("/{id:guid}", async (Guid id, UpdateChargesConfigCommand command, ISender sender, CancellationToken ct) =>
+        {
+            if (id != command.ChargesConfigId)
+                return Results.BadRequest(ApiResponse<string>.Fail("ID mismatch"));
+            try
+            {
+                var result = await sender.Send(command, ct);
+                return Results.Ok(ApiResponse<ChargesConfigDto>.Ok(result, "Charges configuration updated"));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return Results.NotFound(ApiResponse<string>.Fail(ex.Message));
+            }
+        }).WithTags("Ledger");
+
+        charges.MapPatch("/{id:guid}/toggle", async (Guid id, ISender sender, CancellationToken ct) =>
+        {
+            try
+            {
+                var result = await sender.Send(new ToggleChargesConfigStatusCommand(id), ct);
+                return Results.Ok(ApiResponse<ChargesConfigDto>.Ok(result));
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return Results.NotFound(ApiResponse<string>.Fail(ex.Message));
+            }
         }).WithTags("Ledger");
 
         return app;

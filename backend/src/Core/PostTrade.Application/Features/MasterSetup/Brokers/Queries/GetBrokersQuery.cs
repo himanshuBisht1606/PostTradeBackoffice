@@ -22,7 +22,11 @@ public class GetBrokersQueryHandler : IRequestHandler<GetBrokersQuery, IEnumerab
     {
         var tenantId = _tenantContext.GetCurrentTenantId();
         var brokers = await _repo.FindAsync(b => b.TenantId == tenantId, cancellationToken);
-        return brokers.Select(b => new BrokerDto(b.BrokerId, b.TenantId, b.BrokerCode, b.BrokerName,
-            b.SEBIRegistrationNo, b.ContactEmail, b.ContactPhone, b.Status, b.Address, b.PAN, b.GST));
+        return brokers.Select(b => new BrokerDto(
+            b.BrokerId, b.TenantId, b.BrokerCode, b.BrokerName,
+            b.EntityType, b.Status, b.SEBIRegistrationNo,
+            b.ContactEmail, b.ContactPhone,
+            b.RegisteredCity, b.RegisteredState,
+            b.PAN, b.GST));
     }
 }
