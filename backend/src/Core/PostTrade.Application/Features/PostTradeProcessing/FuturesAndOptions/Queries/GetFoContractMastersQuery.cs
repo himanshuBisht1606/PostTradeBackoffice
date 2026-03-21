@@ -59,6 +59,64 @@ public class GetFoContractMastersQueryHandler : IRequestHandler<GetFoContractMas
     }
 }
 
+// ── Curated FoContracts table (Master Setup → FO Instruments view) ───────────
+
+public record GetFoContractsQuery(
+    string? Exchange,
+    DateOnly? TradingDate,
+    string? Symbol,
+    string? InstrumentType,   // FUTIDX | FUTSTK | OPTIDX | OPTSTK
+    string? OptionType,       // CE | PE | FX
+    int Page = 1,
+    int PageSize = 50
+) : IRequest<IEnumerable<FoContractDto>>;
+
+public class GetFoContractsQueryHandler : IRequestHandler<GetFoContractsQuery, IEnumerable<FoContractDto>>
+{
+    private readonly IRepository<FoContract> _repo;
+    private readonly ITenantContext _tenantContext;
+
+    public GetFoContractsQueryHandler(IRepository<FoContract> repo, ITenantContext tenantContext)
+    {
+        _repo = repo;
+        _tenantContext = tenantContext;
+    }
+
+    public async Task<IEnumerable<FoContractDto>> Handle(GetFoContractsQuery request, CancellationToken cancellationToken)
+    {
+        var tenantId = _tenantContext.GetCurrentTenantId();
+        var all = await _repo.FindAsync(c => c.TenantId == tenantId, cancellationToken);
+        var query = all.AsEnumerable();
+
+        if (!string.IsNullOrWhiteSpace(request.Exchange))
+            query = query.Where(c => c.Exchange == request.Exchange);
+        if (request.TradingDate.HasValue)
+            query = query.Where(c => c.TradingDate == request.TradingDate.Value);
+        if (!string.IsNullOrWhiteSpace(request.Symbol))
+            query = query.Where(c => c.Symbol.Contains(request.Symbol, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(request.InstrumentType))
+            query = query.Where(c => c.InstrumentType == request.InstrumentType);
+        if (!string.IsNullOrWhiteSpace(request.OptionType))
+            query = query.Where(c => c.OptionType == request.OptionType);
+
+        return query
+            .OrderBy(c => c.InstrumentType)
+            .ThenBy(c => c.Symbol)
+            .ThenBy(c => c.ExpiryDate)
+            .ThenBy(c => c.StrikePrice)
+            .Skip((request.Page - 1) * request.PageSize)
+            .Take(request.PageSize)
+            .Select(c => new FoContractDto(
+                c.ContractId, c.Exchange, c.TradingDate,
+                c.InstrumentType, c.Symbol, c.ContractName,
+                c.ExpiryDate, c.StrikePrice, c.OptionType,
+                c.LotSize, c.FMultiplier, c.FinInstrmId,
+                c.UnderlyingSymbol, c.Isin, c.TickSize, c.SttlmMtd,
+                c.RegisteredInstrumentId))
+            .ToList();
+    }
+}
+
 // ── Broker contract book view (matches cONTRACT.xls format) ──────────────────
 public record GetFoContractBookQuery(
     string? Exchange,

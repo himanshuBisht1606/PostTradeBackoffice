@@ -29,6 +29,7 @@ public class FoContractMasterConfiguration : IEntityTypeConfiguration<FoContract
         builder.Property(c => c.OptnExrcStyle).HasMaxLength(5);
         builder.Property(c => c.Isin).HasMaxLength(20);
 
+        builder.Property(c => c.FMultiplier).HasColumnType("decimal(18,6)").HasDefaultValue(1m);
         builder.Property(c => c.RegisteredInstrumentId).IsRequired(false);
 
         builder.HasIndex(c => new { c.TenantId, c.Exchange, c.TradingDate, c.TckrSymb });

@@ -96,6 +96,8 @@ public class PostTradeDbContext : DbContext
     public DbSet<FoStampDuty> FoStampDuties => Set<FoStampDuty>();
     public DbSet<FoPosition> FoPositions => Set<FoPosition>();
     public DbSet<FoContractMaster> FoContractMasters => Set<FoContractMaster>();
+    public DbSet<FoContract> FoContracts => Set<FoContract>();      // Curated master (from FoContractMaster)
+    public DbSet<FoTradeDate> FoTradeDates => Set<FoTradeDate>();   // Date-level normalized staging
 
     // Post-Trade Processing — FO Structured Tables (populated from staging after import)
     public DbSet<FoTradeBook> FoTradeBook => Set<FoTradeBook>();
@@ -110,6 +112,13 @@ public class PostTradeDbContext : DbContext
 
         // Apply all configurations
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PostTradeDbContext).Assembly);
+
+        // Shared FO trade serial number sequence.
+        // Used by FoTradeDate on insert (HasDefaultValueSql("nextval(...)")).
+        // Also used by BF/CF/EX/AS/CL/manual trade creation via raw SQL nextval() call.
+        modelBuilder.HasSequence<long>("fo_trn_slno_seq", "post_trade")
+            .StartsAt(1)
+            .IncrementsBy(1);
 
         // Global query filter for multi-tenancy
         // tenantId may be Guid.Empty at design-time (migrations); skip filters in that case
@@ -152,6 +161,8 @@ public class PostTradeDbContext : DbContext
             modelBuilder.Entity<FoStampDuty>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<FoPosition>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<FoContractMaster>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoContract>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoTradeDate>().HasQueryFilter(e => e.TenantId == tenantId);
 
             // FO structured tables
             modelBuilder.Entity<FoTradeBook>().HasQueryFilter(e => e.TenantId == tenantId);

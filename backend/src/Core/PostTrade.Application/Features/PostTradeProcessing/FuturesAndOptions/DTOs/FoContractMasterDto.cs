@@ -50,6 +50,31 @@ public record FoContractBookItemDto(
     Guid ContractRowId
 );
 
+/// <summary>
+/// Curated FO contract — from FoContracts table (post-filtered, normalized fields).
+/// Strike is already in ₹ (paise ÷ 100). InstrumentType is normalized (FUTIDX/FUTSTK/OPTIDX/OPTSTK).
+/// Used by Master Setup → FO Instruments view.
+/// </summary>
+public record FoContractDto(
+    Guid ContractId,
+    string Exchange,
+    DateOnly TradingDate,
+    string InstrumentType,      // FUTIDX | FUTSTK | OPTIDX | OPTSTK
+    string Symbol,
+    string ContractName,        // FUTIDXNIFTY27MAR2025 — display name
+    DateOnly ExpiryDate,
+    decimal StrikePrice,        // in ₹ (paise ÷ 100)
+    string OptionType,          // CE | PE | FX
+    long LotSize,
+    decimal FMultiplier,
+    string? FinInstrmId,
+    string UnderlyingSymbol,
+    string? Isin,
+    decimal TickSize,
+    string? SttlmMtd,
+    Guid? RegisteredInstrumentId
+);
+
 public record FoContractBookPagedDto(
     IEnumerable<FoContractBookItemDto> Items,
     int TotalCount,

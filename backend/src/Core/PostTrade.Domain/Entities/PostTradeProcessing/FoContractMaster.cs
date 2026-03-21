@@ -35,6 +35,12 @@ public class FoContractMaster : BaseEntity
     public string? OptnExrcStyle { get; set; }          // E=European / A=American (f[60])
     public string? Isin { get; set; }                   // ISIN code (f[110])
 
+    /// <summary>
+    /// Price multiplier (CMULTIPLIER in CFORise) — from Mltplr column (f[71] in NFO/BFO contract file).
+    /// Used for TradeValue = Qty × Price × FMultiplier. Default 1 for equity derivatives.
+    /// </summary>
+    public decimal FMultiplier { get; set; } = 1m;
+
     // Instrument registration — set when this contract is promoted to a master Instrument
     public Guid? RegisteredInstrumentId { get; set; }
 

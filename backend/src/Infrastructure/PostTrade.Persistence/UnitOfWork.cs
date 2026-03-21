@@ -52,4 +52,13 @@ public class UnitOfWork : IUnitOfWork
     {
         return await _context.Set<T>().Where(predicate).ExecuteDeleteAsync(cancellationToken);
     }
+
+    public async Task<long[]> GetNextSequenceValuesAsync(string sequenceName, int count, CancellationToken cancellationToken = default)
+    {
+        if (count <= 0) return Array.Empty<long>();
+        // Single round-trip to fetch N sequence values — equivalent of Oracle SYSDBSEQUENCE bulk fetch
+        return await _context.Database
+            .SqlQueryRaw<long>($"SELECT nextval('{sequenceName}') FROM generate_series(1, {count})")
+            .ToArrayAsync(cancellationToken);
+    }
 }

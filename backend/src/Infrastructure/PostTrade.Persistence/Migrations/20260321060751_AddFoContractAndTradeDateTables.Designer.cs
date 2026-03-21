@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using PostTrade.Persistence.Context;
@@ -11,9 +12,11 @@ using PostTrade.Persistence.Context;
 namespace PostTrade.Persistence.Migrations
 {
     [DbContext(typeof(PostTradeDbContext))]
-    partial class PostTradeDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260321060751_AddFoContractAndTradeDateTables")]
+    partial class AddFoContractAndTradeDateTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3703,9 +3706,6 @@ namespace PostTrade.Persistence.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
-                    b.Property<Guid?>("RegisteredInstrumentId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("SourceBatchId")
                         .HasColumnType("uuid");
 
@@ -5691,7 +5691,7 @@ namespace PostTrade.Persistence.Migrations
 
                     b.HasIndex("TenantId", "GlobalExchange", "TradeDate", "ClientCode");
 
-                    b.HasIndex("TenantId", "TradeDate", "Exchange", "UniqueTradeId", "ClientCode", "Side")
+                    b.HasIndex("TenantId", "TradeDate", "Exchange", "UniqueTradeId")
                         .IsUnique();
 
                     b.ToTable("FoTradeDate", "post_trade");

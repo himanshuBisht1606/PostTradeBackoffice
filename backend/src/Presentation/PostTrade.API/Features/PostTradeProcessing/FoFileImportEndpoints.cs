@@ -14,12 +14,13 @@ public static class FoFileImportEndpoints
     {
         // ── Contract Master (prerequisite for trade import) ───────────────────
 
-        group.MapPost("/import/contract-master", async (IFormFile file, ISender sender, CancellationToken ct,
+        group.MapPost("/import/contract-master", async (IFormFile file, ISender sender,
             DateOnly tradingDate, string exchange = "NFO") =>
         {
             await using var stream = file.OpenReadStream();
+            // CancellationToken.None — import must run to completion regardless of client timeout
             var result = await sender.Send(
-                new ImportFoContractMasterCommand(stream, tradingDate, exchange, file.FileName), ct);
+                new ImportFoContractMasterCommand(stream, tradingDate, exchange, file.FileName), CancellationToken.None);
             return Results.Ok(ApiResponse<object>.Ok(result, "FO Contract Master imported"));
         })
         .DisableAntiforgery()
@@ -27,12 +28,13 @@ public static class FoFileImportEndpoints
 
         // ── Trade files ───────────────────────────────────────────────────────
 
-        group.MapPost("/import/trade", async (IFormFile file, ISender sender, CancellationToken ct,
+        group.MapPost("/import/trade", async (IFormFile file, ISender sender,
             DateOnly tradingDate, string exchange = "NFO") =>
         {
             await using var stream = file.OpenReadStream();
+            // CancellationToken.None — import must run to completion regardless of client timeout
             var result = await sender.Send(
-                new ImportFoTradeFileCommand(stream, tradingDate, exchange, "ManualUpload", file.FileName), ct);
+                new ImportFoTradeFileCommand(stream, tradingDate, exchange, "ManualUpload", file.FileName), CancellationToken.None);
             return Results.Ok(ApiResponse<object>.Ok(result, "FO Trade file imported"));
         })
         .DisableAntiforgery()
@@ -40,12 +42,12 @@ public static class FoFileImportEndpoints
 
         // ── BhavCopy ─────────────────────────────────────────────────────────
 
-        group.MapPost("/import/bhavcopy", async (IFormFile file, ISender sender, CancellationToken ct,
+        group.MapPost("/import/bhavcopy", async (IFormFile file, ISender sender,
             DateOnly tradingDate, string exchange = "NFO") =>
         {
             await using var stream = file.OpenReadStream();
             var result = await sender.Send(
-                new ImportFoBhavCopyCommand(stream, tradingDate, exchange, "ManualUpload", file.FileName), ct);
+                new ImportFoBhavCopyCommand(stream, tradingDate, exchange, "ManualUpload", file.FileName), CancellationToken.None);
             return Results.Ok(ApiResponse<object>.Ok(result, "FO BhavCopy file imported"));
         })
         .DisableAntiforgery()
@@ -53,12 +55,12 @@ public static class FoFileImportEndpoints
 
         // ── STT ───────────────────────────────────────────────────────────────
 
-        group.MapPost("/import/stt", async (IFormFile file, ISender sender, CancellationToken ct,
+        group.MapPost("/import/stt", async (IFormFile file, ISender sender,
             DateOnly tradingDate, string exchange = "NFO") =>
         {
             await using var stream = file.OpenReadStream();
             var result = await sender.Send(
-                new ImportFoSttCommand(stream, tradingDate, exchange, "ManualUpload", file.FileName), ct);
+                new ImportFoSttCommand(stream, tradingDate, exchange, "ManualUpload", file.FileName), CancellationToken.None);
             return Results.Ok(ApiResponse<object>.Ok(result, "FO STT file imported"));
         })
         .DisableAntiforgery()
@@ -66,12 +68,12 @@ public static class FoFileImportEndpoints
 
         // ── Stamp Duty ────────────────────────────────────────────────────────
 
-        group.MapPost("/import/stamp-duty", async (IFormFile file, ISender sender, CancellationToken ct,
+        group.MapPost("/import/stamp-duty", async (IFormFile file, ISender sender,
             DateOnly tradingDate, string exchange = "NFO") =>
         {
             await using var stream = file.OpenReadStream();
             var result = await sender.Send(
-                new ImportFoStampDutyCommand(stream, tradingDate, exchange, "ManualUpload", file.FileName), ct);
+                new ImportFoStampDutyCommand(stream, tradingDate, exchange, "ManualUpload", file.FileName), CancellationToken.None);
             return Results.Ok(ApiResponse<object>.Ok(result, "FO Stamp Duty file imported"));
         })
         .DisableAntiforgery()
@@ -79,18 +81,48 @@ public static class FoFileImportEndpoints
 
         // ── Position ──────────────────────────────────────────────────────────
 
-        group.MapPost("/import/position", async (IFormFile file, ISender sender, CancellationToken ct,
+        group.MapPost("/import/position", async (IFormFile file, ISender sender,
             DateOnly tradingDate, string exchange = "NFO") =>
         {
             await using var stream = file.OpenReadStream();
             var result = await sender.Send(
-                new ImportFoPositionCommand(stream, tradingDate, exchange, "ManualUpload", file.FileName), ct);
+                new ImportFoPositionCommand(stream, tradingDate, exchange, "ManualUpload", file.FileName), CancellationToken.None);
             return Results.Ok(ApiResponse<object>.Ok(result, "FO Position file imported"));
         })
         .DisableAntiforgery()
         .WithTags("FO File Import");
 
-        // ── Contract Master query ─────────────────────────────────────────────
+        // ── Curated FO Contracts (Master Setup → FO Instruments) ─────────────
+
+        group.MapGet("/contracts", async (ISender sender, CancellationToken ct,
+            string? exchange = null,
+            DateOnly? tradingDate = null,
+            string? symbol = null,
+            string? instrumentType = null,
+            string? optionType = null,
+            int page = 1,
+            int pageSize = 50) =>
+        {
+            var result = await sender.Send(new GetFoContractsQuery(exchange, tradingDate, symbol, instrumentType, optionType, page, pageSize), ct);
+            return Results.Ok(ApiResponse<IEnumerable<FoContractDto>>.Ok(result));
+        })
+        .WithTags("FO File Import");
+
+        group.MapPost("/contracts/{id:guid}/register", async (Guid id, ISender sender, CancellationToken ct) =>
+        {
+            try
+            {
+                var result = await sender.Send(new RegisterFoCuratedContractCommand(id), ct);
+                return Results.Ok(ApiResponse<InstrumentDto>.Ok(result, "Contract registered as instrument"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.Conflict(ApiResponse<string>.Fail(ex.Message));
+            }
+        })
+        .WithTags("FO File Import");
+
+        // ── Contract Master query (raw staging) ───────────────────────────────
 
         group.MapGet("/contract-masters", async (ISender sender, CancellationToken ct,
             string? exchange = null,

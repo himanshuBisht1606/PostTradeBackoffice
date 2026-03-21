@@ -14,6 +14,11 @@ public class ExchangeSegmentConfiguration : IEntityTypeConfiguration<ExchangeSeg
         builder.Property(e => e.ExchangeSegmentCode).IsRequired().HasMaxLength(50);
         builder.Property(e => e.ExchangeSegmentName).IsRequired().HasMaxLength(200);
 
+        builder.Property(e => e.ClearingCorp).HasMaxLength(10);       // NCL | ICCL
+        builder.Property(e => e.GlobalExchangeCode).HasMaxLength(10); // NFO | BFO
+        builder.Property(e => e.TradingMemberId).HasMaxLength(20);
+        builder.Property(e => e.BrokerCode).HasMaxLength(20);
+
         builder.HasIndex(e => new { e.TenantId, e.ExchangeId, e.ExchangeSegmentCode }).IsUnique();
 
         builder.HasOne(e => e.Tenant).WithMany().HasForeignKey(e => e.TenantId);
