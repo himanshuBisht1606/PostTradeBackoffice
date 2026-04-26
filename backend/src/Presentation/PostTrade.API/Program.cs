@@ -258,6 +258,9 @@ app.MapGroup("/api/post-trade/fo").MapFoFileImportEndpoints().RequireAuthorizati
 // Clearing — FO Trade Book
 app.MapGroup("/api/clearing/fo/trade-book").MapFoTradeBookEndpoints().RequireAuthorization();
 
+// Clearing — FO Finance Ledger
+app.MapGroup("/api/clearing/fo/finance-ledger").MapFoFinanceLedgerEndpoints().RequireAuthorization();
+
 // Health check endpoint — used by Kubernetes liveness and readiness probes
 app.MapHealthChecks("/health");
 

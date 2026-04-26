@@ -105,6 +105,7 @@ public class PostTradeDbContext : DbContext
     public DbSet<FoClientPositionBook> FoClientPositionBook => Set<FoClientPositionBook>();
     public DbSet<FoSttLedger> FoSttLedger => Set<FoSttLedger>();
     public DbSet<FoStampDutyLedger> FoStampDutyLedger => Set<FoStampDutyLedger>();
+    public DbSet<FoFinanceLedger> FoFinanceLedger => Set<FoFinanceLedger>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -170,6 +171,7 @@ public class PostTradeDbContext : DbContext
             modelBuilder.Entity<FoClientPositionBook>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<FoSttLedger>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<FoStampDutyLedger>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoFinanceLedger>().HasQueryFilter(e => e.TenantId == tenantId);
         }
     }
 
