@@ -19,6 +19,6 @@ public class ExchangeConfiguration : IEntityTypeConfiguration<Exchange>
         builder.HasIndex(e => new { e.TenantId, e.ExchangeCode }).IsUnique();
 
         builder.HasOne(e => e.Tenant).WithMany().HasForeignKey(e => e.TenantId);
-        builder.HasMany(e => e.Segments).WithOne(s => s.Exchange).HasForeignKey(s => s.ExchangeId);
+        builder.HasMany(e => e.ExchangeSegments).WithOne(s => s.Exchange).HasForeignKey(s => s.ExchangeId);
     }
 }

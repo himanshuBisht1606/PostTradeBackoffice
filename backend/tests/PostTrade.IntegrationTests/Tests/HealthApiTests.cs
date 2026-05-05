@@ -5,7 +5,7 @@ public class HealthApiTests : BaseIntegrationTest
 {
     public HealthApiTests(CustomWebApplicationFactory factory) : base(factory) { }
 
-    [Fact]
+    [SkippableFact]
     public async Task GetHealth_Returns200Ok()
     {
         var response = await Client.GetAsync("/health");

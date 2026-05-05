@@ -23,17 +23,24 @@ public class CreateClientCommandHandlerTests
     }
 
     private static CreateClientCommand ValidCommand() => new(
-        BrokerId:      Guid.NewGuid(),
-        ClientCode:    "CLT001",
-        ClientName:    "John Doe",
-        Email:         "john@example.com",
-        Phone:         "9876543210",
-        ClientType:    ClientType.Individual,
-        PAN:           null,
-        Address:       null,
-        BankAccountNo: null,
-        BankName:      null,
-        BankIFSC:      null
+        BrokerId:       Guid.NewGuid(),
+        BranchId:       null,
+        ClientCode:     "CLT001",
+        ClientName:     "John Doe",
+        Email:          "john@example.com",
+        Phone:          "9876543210",
+        ClientType:     ClientType.Individual,
+        PAN:            null,
+        Aadhaar:        null,
+        DPId:           null,
+        DematAccountNo: null,
+        Depository:     null,
+        Address:        null,
+        StateCode:      null,
+        StateName:      null,
+        BankAccountNo:  null,
+        BankName:       null,
+        BankIFSC:       null
     );
 
     [Fact]

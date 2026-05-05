@@ -11,8 +11,8 @@ public class Exchange : BaseEntity
     public TimeOnly? TradingStartTime { get; set; }
     public TimeOnly? TradingEndTime { get; set; }
     public bool IsActive { get; set; }
-    
+
     // Navigation
     public virtual Tenant Tenant { get; set; } = null!;
-    public virtual ICollection<Segment> Segments { get; set; } = new List<Segment>();
+    public virtual ICollection<ExchangeSegment> ExchangeSegments { get; set; } = new List<ExchangeSegment>();
 }

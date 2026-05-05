@@ -21,7 +21,7 @@ public record TradeDto(
     string? RejectionReason,
     TradeSource Source,
     decimal Brokerage,
-    decimal STT,
+    decimal Stt,
     decimal ExchangeTxnCharge,
     decimal GST,
     decimal StampDuty,

@@ -8,11 +8,14 @@ public record ChargesConfigDto(
     Guid? BrokerId,
     string ChargeName,
     ChargeType ChargeType,
+    TradeSegment Segment,
+    ChargeApplicableTo ApplicableTo,
     CalculationType CalculationType,
     decimal Rate,
     decimal? MinAmount,
     decimal? MaxAmount,
     bool IsActive,
     DateTime EffectiveFrom,
-    DateTime? EffectiveTo
+    DateTime? EffectiveTo,
+    string? Remarks
 );

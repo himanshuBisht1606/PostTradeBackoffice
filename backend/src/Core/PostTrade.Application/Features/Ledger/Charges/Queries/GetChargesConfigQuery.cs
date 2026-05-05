@@ -8,6 +8,7 @@ namespace PostTrade.Application.Features.Ledger.Charges.Queries;
 
 public record GetChargesConfigQuery(
     ChargeType? ChargeType = null,
+    TradeSegment? Segment = null,
     bool? IsActive = null
 ) : IRequest<IEnumerable<ChargesConfigDto>>;
 
@@ -29,18 +30,20 @@ public class GetChargesConfigQueryHandler : IRequestHandler<GetChargesConfigQuer
         var configs = await _repo.FindAsync(
             c => c.TenantId == tenantId &&
                  (request.ChargeType == null || c.ChargeType == request.ChargeType) &&
+                 (request.Segment == null || c.Segment == request.Segment || c.Segment == TradeSegment.All) &&
                  (request.IsActive == null || c.IsActive == request.IsActive),
             cancellationToken);
 
         return configs
-            .OrderBy(c => c.ChargeType)
+            .OrderBy(c => c.Segment)
+            .ThenBy(c => c.ChargeType)
             .ThenBy(c => c.EffectiveFrom)
             .Select(ToDto);
     }
 
     internal static ChargesConfigDto ToDto(ChargesConfiguration c) => new(
         c.ChargesConfigId, c.TenantId, c.BrokerId,
-        c.ChargeName, c.ChargeType, c.CalculationType,
-        c.Rate, c.MinAmount, c.MaxAmount,
-        c.IsActive, c.EffectiveFrom, c.EffectiveTo);
+        c.ChargeName, c.ChargeType, c.Segment, c.ApplicableTo,
+        c.CalculationType, c.Rate, c.MinAmount, c.MaxAmount,
+        c.IsActive, c.EffectiveFrom, c.EffectiveTo, c.Remarks);
 }
