@@ -10,6 +10,7 @@ using PostTrade.API.Features.MasterSetup;
 using PostTrade.API.Features.ReferenceMaster;
 using PostTrade.API.Features.CorporateActions;
 using PostTrade.API.Features.EOD;
+using PostTrade.API.Features.PostTrade;
 using PostTrade.API.Features.Ledger;
 using PostTrade.API.Features.Reconciliation;
 using PostTrade.API.Features.Settlement;
@@ -204,6 +205,9 @@ app.MapCorporateActionEndpoints();
 
 // EOD Processing
 app.MapGroup("/api/eod").MapEodEndpoints().RequireAuthorization();
+
+// Post-Trade — FO
+app.MapGroup("/api/post-trade/fo").MapFoImportEndpoints().RequireAuthorization();
 
 // Health check endpoint — used by Kubernetes liveness and readiness probes
 app.MapHealthChecks("/health");
