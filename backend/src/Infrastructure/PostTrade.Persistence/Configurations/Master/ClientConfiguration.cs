@@ -11,7 +11,8 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
         builder.ToTable("Clients", "master");
         builder.HasKey(c => c.ClientId);
 
-        builder.Property(c => c.ClientCode).IsRequired().HasMaxLength(20);
+        builder.Property(c => c.RegistrationNumber).IsRequired().HasMaxLength(20);
+        builder.Property(c => c.ClientCode).IsRequired(false).HasMaxLength(20);
         builder.Property(c => c.ClientName).IsRequired().HasMaxLength(200);
         builder.Property(c => c.Email).IsRequired().HasMaxLength(200);
         builder.Property(c => c.Phone).HasMaxLength(20);
@@ -55,7 +56,11 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
         builder.Property(c => c.KartaName).HasMaxLength(200);
         builder.Property(c => c.KartaPan).HasMaxLength(10);
 
-        builder.HasIndex(c => new { c.TenantId, c.ClientCode }).IsUnique();
+        // RegistrationNumber: unique per tenant, always set
+        builder.HasIndex(c => new { c.TenantId, c.RegistrationNumber }).IsUnique();
+        // ClientCode: unique per tenant only when assigned (partial index — nulls excluded)
+        builder.HasIndex(c => new { c.TenantId, c.ClientCode }).IsUnique()
+            .HasFilter("\"ClientCode\" IS NOT NULL");
         builder.HasIndex(c => new { c.TenantId, c.BrokerId });
 
         builder.HasOne(c => c.Tenant).WithMany().HasForeignKey(c => c.TenantId);

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PostTrade.Domain.Entities.Ledger;
 using PostTrade.Domain.Entities.MasterData;
 using PostTrade.Domain.Enums;
 using PostTrade.Persistence.Context;
@@ -283,6 +284,121 @@ public static class DatabaseSeeder
             };
 
             await db.Brokers.AddAsync(broker);
+            await db.SaveChangesAsync();
+        }
+
+        // ── Default charge configurations (as per SEBI / Finance Act 2020) ───
+        if (!await db.ChargesConfigurations.AnyAsync(c => c.TenantId == tenantId))
+        {
+            var effectiveFrom = new DateTime(2020, 7, 1, 0, 0, 0, DateTimeKind.Utc); // Finance Act 2020 STT / stamp changes
+
+            // Helper to build a charge record
+            ChargesConfiguration C(
+                string name, ChargeType ct, TradeSegment seg, ChargeApplicableTo side,
+                CalculationType calc, decimal rate, string? remarks = null,
+                decimal? min = null, decimal? max = null) =>
+                new ChargesConfiguration
+                {
+                    ChargesConfigId = Guid.NewGuid(),
+                    TenantId        = tenantId,
+                    ChargeName      = name,
+                    ChargeType      = ct,
+                    Segment         = seg,
+                    ApplicableTo    = side,
+                    CalculationType = calc,
+                    Rate            = rate,
+                    MinAmount       = min,
+                    MaxAmount       = max,
+                    IsActive        = true,
+                    EffectiveFrom   = effectiveFrom,
+                    Remarks         = remarks,
+                    CreatedAt       = now,
+                    CreatedBy       = "seed",
+                };
+
+            // Short aliases
+            var (Pct, Flat)     = (CalculationType.Percentage, CalculationType.Flat);
+            var (Buy, Sell, Both) = (ChargeApplicableTo.Buy, ChargeApplicableTo.Sell, ChargeApplicableTo.Both);
+            var (CM, FO, CDS, All) = (TradeSegment.CM, TradeSegment.FO, TradeSegment.CDS, TradeSegment.All);
+
+            var charges = new List<ChargesConfiguration>
+            {
+                // ── STT (Securities Transaction Tax) — Finance Act 2020 ──────────
+                // CM Equity
+                C("STT – CM Equity Delivery (Buy)",      ChargeType.STT, CM,  Buy,  Pct, 0.1m,
+                    "0.1% on trade value — delivery buy leg"),
+                C("STT – CM Equity Delivery (Sell)",     ChargeType.STT, CM,  Sell, Pct, 0.1m,
+                    "0.1% on trade value — delivery sell leg"),
+                C("STT – CM Equity Intraday (Sell)",     ChargeType.STT, CM,  Sell, Pct, 0.025m,
+                    "0.025% on trade value — intraday sell leg only"),
+                // F&O
+                C("STT – F&O Futures (Sell)",            ChargeType.STT, FO,  Sell, Pct, 0.0125m,
+                    "0.0125% on contract turnover — futures sell"),
+                C("STT – F&O Options Exercise",          ChargeType.STT, FO,  Sell, Pct, 0.125m,
+                    "0.125% on intrinsic value — options exercise/assignment"),
+                C("STT – F&O Options Premium (Sell)",    ChargeType.STT, FO,  Sell, Pct, 0.0625m,
+                    "0.0625% on option premium — options sell side"),
+
+                // ── Exchange Transaction Charges (NSE rates) ──────────────────
+                C("Exchange Txn – CM Equity (NSE)",      ChargeType.ExchangeTxn, CM,  Both, Pct, 0.00297m,
+                    "NSE: ₹297 per crore — revised rate w.e.f. 1-Oct-2023"),
+                C("Exchange Txn – F&O Futures (NSE)",    ChargeType.ExchangeTxn, FO,  Both, Pct, 0.00173m,
+                    "NSE: ₹173 per crore on futures turnover"),
+                C("Exchange Txn – F&O Options (NSE)",    ChargeType.ExchangeTxn, FO,  Both, Pct, 0.03503m,
+                    "NSE: ₹3503 per crore on options premium turnover"),
+                C("Exchange Txn – Currency Futures (NSE-CDS)", ChargeType.ExchangeTxn, CDS, Both, Pct, 0.00035m,
+                    "NSE: ₹35 per crore on currency futures turnover"),
+                C("Exchange Txn – Currency Options (NSE-CDS)", ChargeType.ExchangeTxn, CDS, Both, Pct, 0.0031m,
+                    "NSE: ₹310 per crore on currency options premium"),
+
+                // ── SEBI Turnover Fee ─────────────────────────────────────────
+                C("SEBI Turnover Fee",                   ChargeType.SEBI, All, Both, Pct, 0.0001m,
+                    "₹10 per crore — applies to all segments (SEBI circular 2022)"),
+
+                // ── IPFT (Investor Protection Fund Trust) ────────────────────
+                C("IPFT Levy – F&O (NSE)",               ChargeType.IPFT, FO,  Both, Pct, 0.0001m,
+                    "₹10 per crore — NSE IPFT levy on F&O segment"),
+                C("IPFT Levy – CM (NSE)",                ChargeType.IPFT, CM,  Both, Pct, 0.0001m,
+                    "₹10 per crore — NSE IPFT levy on Capital Market segment"),
+
+                // ── Stamp Duty (Finance Act 2020 — uniform rates) ────────────
+                C("Stamp Duty – CM Delivery (Buy)",      ChargeType.StampDuty, CM,  Buy, Pct, 0.015m,
+                    "0.015% on trade value — delivery trades, on Buy side only"),
+                C("Stamp Duty – CM Intraday (Buy)",      ChargeType.StampDuty, CM,  Buy, Pct, 0.003m,
+                    "0.003% on trade value — intraday trades, on Buy side only"),
+                C("Stamp Duty – F&O Futures (Buy)",      ChargeType.StampDuty, FO,  Buy, Pct, 0.002m,
+                    "0.002% on notional turnover — futures Buy side only"),
+                C("Stamp Duty – F&O Options (Buy)",      ChargeType.StampDuty, FO,  Buy, Pct, 0.003m,
+                    "0.003% on option premium — options Buy side only"),
+                C("Stamp Duty – Currency (Buy)",         ChargeType.StampDuty, CDS, Buy, Pct, 0.0001m,
+                    "0.0001% on trade value — currency derivatives Buy side"),
+
+                // ── GST (on brokerage + exchange charges) ────────────────────
+                C("GST on Brokerage & Exchange Charges", ChargeType.GST, All, Both, Pct, 18m,
+                    "18% GST levied on brokerage and exchange transaction charges"),
+
+                // ── Brokerage (typical discount-broker rates) ────────────────
+                C("Brokerage – CM Equity Delivery",      ChargeType.Brokerage, CM, Both, Pct, 0.5m,
+                    "0.5% or ₹20 per order (whichever is lower) — adjust to actual scheme", max: 20m),
+                C("Brokerage – CM Equity Intraday",      ChargeType.Brokerage, CM, Both, Pct, 0.025m,
+                    "0.025% or ₹20 per order (whichever is lower)", max: 20m),
+                C("Brokerage – F&O (Flat per order)",    ChargeType.Brokerage, FO, Both, Flat, 20m,
+                    "₹20 flat per order — standard discount-broker F&O rate"),
+                C("Brokerage – Currency (Flat per order)", ChargeType.Brokerage, CDS, Both, Flat, 20m,
+                    "₹20 flat per order — standard discount-broker currency rate"),
+
+                // ── DP (Depository Participant) Charges ───────────────────────
+                C("DP Charge – CM Equity Sell (per scrip debit)", ChargeType.DPCharge, CM, Sell, Flat, 15.93m,
+                    "CDSL: ₹13.5 + GST ≈ ₹15.93 per ISIN per debit instruction (delivery sells only)"),
+
+                // ── Clearing Charges ──────────────────────────────────────────
+                C("Clearing Charge – F&O (NSCCL)",       ChargeType.ClearingCharge, FO, Both, Pct, 0.00035m,
+                    "NSCCL clearing charge: ₹35 per crore on F&O turnover (approximate)"),
+                C("Clearing Charge – CM (NSCCL)",        ChargeType.ClearingCharge, CM, Both, Pct, 0.00015m,
+                    "NSCCL clearing charge: ₹15 per crore on CM turnover (approximate)"),
+            };
+
+            await db.ChargesConfigurations.AddRangeAsync(charges);
             await db.SaveChangesAsync();
         }
     }

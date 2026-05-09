@@ -12,10 +12,14 @@ using PostTrade.API.Features.CorporateActions;
 using PostTrade.API.Features.EOD;
 using PostTrade.API.Features.PostTrade;
 using PostTrade.API.Features.Ledger;
+using PostTrade.API.Features.Clearing;
+using PostTrade.API.Features.PostTradeProcessing;
 using PostTrade.API.Features.Reconciliation;
 using PostTrade.API.Features.Settlement;
 using PostTrade.API.Features.Trading;
 using PostTrade.API.Middleware;
+using PostTrade.Infrastructure.FileImport;
+using System.Net;
 using Scalar.AspNetCore;
 using PostTrade.Application.Common.Behaviors;
 using PostTrade.Application.Interfaces;
@@ -26,6 +30,16 @@ using PostTrade.Persistence.Context;
 using PostTrade.Persistence.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Allow large file uploads (FO Contract Master: ~34 MB, NSE ~99K rows)
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 150_000_000; // 150 MB
+});
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 150_000_000; // 150 MB
+});
 
 // JSON: serialize enums as strings throughout the API
 builder.Services.ConfigureHttpJsonOptions(options =>
@@ -124,6 +138,38 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IPasswordService, PasswordService>();
 builder.Services.AddScoped<IEODProcessingService, EODProcessingService>();
 
+// Capital Market File Import — background hosted services
+builder.Services.AddHostedService<FileWatcherService>();
+builder.Services.AddHostedService<ImportSchedulerService>();
+
+// Exchange file downloaders — named HttpClients with exchange-specific headers
+builder.Services.AddHttpClient("NseClient", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(120);
+    client.DefaultRequestHeaders.Add("User-Agent",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+    client.DefaultRequestHeaders.Add("Accept", "*/*");
+    client.DefaultRequestHeaders.Add("Accept-Language", "en-US,en;q=0.9");
+    client.DefaultRequestHeaders.Add("Referer", "https://www.nseindia.com/");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+    AllowAutoRedirect = true
+});
+
+builder.Services.AddHttpClient("BseClient", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(120);
+    client.DefaultRequestHeaders.Add("User-Agent",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+    client.DefaultRequestHeaders.Add("Referer", "https://www.bseindia.com/");
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    AllowAutoRedirect = true
+});
+
+builder.Services.AddScoped<IExchangeScripDownloader, ExchangeScripDownloader>();
+
 // CORS
 builder.Services.AddCors(options =>
 {
@@ -206,8 +252,15 @@ app.MapCorporateActionEndpoints();
 // EOD Processing
 app.MapGroup("/api/eod").MapEodEndpoints().RequireAuthorization();
 
-// Post-Trade — FO
-app.MapGroup("/api/post-trade/fo").MapFoImportEndpoints().RequireAuthorization();
+// Post-Trade Processing — Capital Market File Import
+app.MapGroup("/api/post-trade/cm").MapCmFileImportEndpoints().RequireAuthorization();
+app.MapGroup("/api/post-trade/fo").MapFoFileImportEndpoints().RequireAuthorization();
+
+// Clearing — FO Trade Book
+app.MapGroup("/api/clearing/fo/trade-book").MapFoTradeBookEndpoints().RequireAuthorization();
+
+// Clearing — FO Finance Ledger
+app.MapGroup("/api/clearing/fo/finance-ledger").MapFoFinanceLedgerEndpoints().RequireAuthorization();
 
 // Health check endpoint — used by Kubernetes liveness and readiness probes
 app.MapHealthChecks("/health");

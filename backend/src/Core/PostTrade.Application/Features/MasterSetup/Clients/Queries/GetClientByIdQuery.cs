@@ -31,7 +31,7 @@ public class GetClientByIdQueryHandler : IRequestHandler<GetClientByIdQuery, Cli
 
     internal static ClientDetailDto Map(Client c) => new(
         c.ClientId, c.TenantId, c.BrokerId, c.BranchId,
-        c.ClientCode, c.ClientName, c.Email, c.Phone, c.ClientType, c.Status,
+        c.RegistrationNumber, c.ClientCode, c.ClientName, c.Email, c.Phone, c.ClientType, c.Status,
         c.PAN, c.Aadhaar, c.DPId, c.DematAccountNo, c.Depository,
         c.Address, c.StateCode, c.StateName, c.BankAccountNo, c.BankName,
         c.BankIFSC, c.KYCStatus, c.RiskCategory,

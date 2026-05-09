@@ -27,12 +27,15 @@ public class CreateChargesConfigCommandHandlerTests
         BrokerId:        BrokerId,
         ChargeName:      "Brokerage",
         ChargeType:      ChargeType.Brokerage,
+        Segment:         TradeSegment.CM,
+        ApplicableTo:    ChargeApplicableTo.Both,
         CalculationType: CalculationType.Percentage,
         Rate:            0.5m,
         MinAmount:       50m,
         MaxAmount:       5000m,
         EffectiveFrom:   DateTime.Today,
-        EffectiveTo:     DateTime.Today.AddYears(1)
+        EffectiveTo:     DateTime.Today.AddYears(1),
+        Remarks:         null
     );
 
     [Fact]

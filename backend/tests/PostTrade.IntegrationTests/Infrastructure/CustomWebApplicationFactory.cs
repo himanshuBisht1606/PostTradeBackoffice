@@ -29,10 +29,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 
             await _dbContainer.StartAsync();
         }
-        catch (ArgumentException)
+        catch (Exception)
         {
-            // Docker is not running or not installed — tests will be skipped.
+            // Docker not running, not installed, or image pull failed — skip all tests.
             DockerAvailable = false;
+            _dbContainer = null;
         }
     }
 

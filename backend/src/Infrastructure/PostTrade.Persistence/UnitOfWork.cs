@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using PostTrade.Application.Interfaces;
 using PostTrade.Persistence.Context;
@@ -44,5 +46,19 @@ public class UnitOfWork : IUnitOfWork
             await _transaction.DisposeAsync();
             _transaction = null;
         }
+    }
+
+    public async Task<int> ExecuteDeleteAsync<T>(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default) where T : class
+    {
+        return await _context.Set<T>().Where(predicate).ExecuteDeleteAsync(cancellationToken);
+    }
+
+    public async Task<long[]> GetNextSequenceValuesAsync(string sequenceName, int count, CancellationToken cancellationToken = default)
+    {
+        if (count <= 0) return Array.Empty<long>();
+        // Single round-trip to fetch N sequence values — equivalent of Oracle SYSDBSEQUENCE bulk fetch
+        return await _context.Database
+            .SqlQueryRaw<long>($"SELECT nextval('{sequenceName}') FROM generate_series(1, {count})")
+            .ToArrayAsync(cancellationToken);
     }
 }

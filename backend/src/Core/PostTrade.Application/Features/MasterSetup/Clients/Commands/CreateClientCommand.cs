@@ -60,13 +60,17 @@ public class CreateClientCommandHandler : IRequestHandler<CreateClientCommand, C
     public async Task<ClientDto> Handle(CreateClientCommand request, CancellationToken cancellationToken)
     {
         var tenantId = _tenantContext.GetCurrentTenantId();
+        var existingCount = (await _repo.FindAsync(c => c.TenantId == tenantId, cancellationToken)).Count();
+        var registrationNumber = $"REG-{(existingCount + 1):D6}";
+
         var client = new Client
         {
-            ClientId = Guid.NewGuid(),
-            TenantId = tenantId,
-            BrokerId = request.BrokerId,
-            BranchId = request.BranchId,
-            ClientCode = request.ClientCode,
+            ClientId           = Guid.NewGuid(),
+            TenantId           = tenantId,
+            BrokerId           = request.BrokerId,
+            BranchId           = request.BranchId,
+            RegistrationNumber = registrationNumber,
+            ClientCode         = request.ClientCode,
             ClientName = request.ClientName,
             Email = request.Email,
             Phone = request.Phone,
@@ -94,8 +98,8 @@ public class CreateClientCommandHandler : IRequestHandler<CreateClientCommand, C
     }
 
     private static ClientDto MapToDto(Client c) => new(
-        c.ClientId, c.TenantId, c.BrokerId, c.BranchId, c.ClientCode, c.ClientName,
-        c.Email, c.Phone, c.ClientType, c.Status, c.PAN, c.Aadhaar, c.DPId,
+        c.ClientId, c.TenantId, c.BrokerId, c.BranchId, c.RegistrationNumber, c.ClientCode,
+        c.ClientName, c.Email, c.Phone, c.ClientType, c.Status, c.PAN, c.Aadhaar, c.DPId,
         c.DematAccountNo, c.Depository, c.Address, c.StateCode, c.StateName,
         c.BankAccountNo, c.BankName, c.BankIFSC, c.KYCStatus, c.RiskCategory);
 }

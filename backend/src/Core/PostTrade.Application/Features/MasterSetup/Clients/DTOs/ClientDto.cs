@@ -7,7 +7,8 @@ public record ClientDto(
     Guid TenantId,
     Guid BrokerId,
     Guid? BranchId,
-    string ClientCode,
+    string RegistrationNumber,
+    string? ClientCode,         // null until ops assigns it
     string ClientName,
     string Email,
     string Phone,

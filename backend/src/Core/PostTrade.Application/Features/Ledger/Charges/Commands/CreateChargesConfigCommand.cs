@@ -12,12 +12,15 @@ public record CreateChargesConfigCommand(
     Guid? BrokerId,
     string ChargeName,
     ChargeType ChargeType,
+    TradeSegment Segment,
+    ChargeApplicableTo ApplicableTo,
     CalculationType CalculationType,
     decimal Rate,
     decimal? MinAmount,
     decimal? MaxAmount,
     DateTime EffectiveFrom,
-    DateTime? EffectiveTo
+    DateTime? EffectiveTo,
+    string? Remarks
 ) : IRequest<ChargesConfigDto>;
 
 public class CreateChargesConfigCommandValidator : AbstractValidator<CreateChargesConfigCommand>
@@ -36,6 +39,7 @@ public class CreateChargesConfigCommandValidator : AbstractValidator<CreateCharg
             .GreaterThan(x => x.EffectiveFrom)
             .When(x => x.EffectiveTo.HasValue)
             .WithMessage("EffectiveTo must be after EffectiveFrom.");
+        RuleFor(x => x.Remarks).MaximumLength(500).When(x => x.Remarks != null);
     }
 }
 
@@ -64,13 +68,16 @@ public class CreateChargesConfigCommandHandler : IRequestHandler<CreateChargesCo
             BrokerId = request.BrokerId,
             ChargeName = request.ChargeName,
             ChargeType = request.ChargeType,
+            Segment = request.Segment,
+            ApplicableTo = request.ApplicableTo,
             CalculationType = request.CalculationType,
             Rate = request.Rate,
             MinAmount = request.MinAmount,
             MaxAmount = request.MaxAmount,
             IsActive = true,
             EffectiveFrom = request.EffectiveFrom,
-            EffectiveTo = request.EffectiveTo
+            EffectiveTo = request.EffectiveTo,
+            Remarks = request.Remarks,
         };
 
         await _repo.AddAsync(config, cancellationToken);

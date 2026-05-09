@@ -25,8 +25,10 @@ public class LedgerApiTests : BaseIntegrationTest, IAsyncLifetime
         {
             BrokerCode = $"LBR{unique}",
             BrokerName = $"Ledger Broker {unique}",
+            EntityType = 4,   // PrivateLimited
             ContactEmail = $"ledger.broker{unique}@example.com",
-            ContactPhone = "+91-9000000005"
+            ContactPhone = "+91-9000000005",
+            CorrespondenceSameAsRegistered = true
         });
         brokerResponse.EnsureSuccessStatusCode();
         var brokerBody = await brokerResponse.Content.ReadFromJsonAsync<JsonElement>();

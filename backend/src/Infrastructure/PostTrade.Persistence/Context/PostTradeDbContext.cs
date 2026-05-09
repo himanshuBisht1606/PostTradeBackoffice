@@ -7,6 +7,7 @@ using PostTrade.Domain.Entities.Ledger;
 using PostTrade.Domain.Entities.Reconciliation;
 using PostTrade.Domain.Entities.CorporateActions;
 using PostTrade.Domain.Entities.Audit;
+using PostTrade.Domain.Entities.PostTradeProcessing;
 using PostTrade.Application.Interfaces;
 
 namespace PostTrade.Persistence.Context;
@@ -33,6 +34,7 @@ public class PostTradeDbContext : DbContext
     // Master Data
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Broker> Brokers => Set<Broker>();
+    public DbSet<BrokerExchangeMembership> BrokerExchangeMemberships => Set<BrokerExchangeMembership>();
     public DbSet<Client> Clients => Set<Client>();
     public DbSet<ClientNominee> ClientNominees => Set<ClientNominee>();
     public DbSet<ClientFatca> ClientFatcas => Set<ClientFatca>();
@@ -73,12 +75,51 @@ public class PostTradeDbContext : DbContext
     // Audit
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
+    // Post-Trade Processing — Capital Market File Import
+    public DbSet<CmFileImportBatch> CmFileImportBatches => Set<CmFileImportBatch>();
+    public DbSet<CmFileImportLog> CmFileImportLogs => Set<CmFileImportLog>();
+    public DbSet<CmTrade> CmTrades => Set<CmTrade>();
+    public DbSet<CmBhavCopy> CmBhavCopies => Set<CmBhavCopy>();
+    public DbSet<CmMargin> CmMargins => Set<CmMargin>();
+    public DbSet<CmObligation> CmObligations => Set<CmObligation>();
+    public DbSet<CmStt> CmStts => Set<CmStt>();
+    public DbSet<CmStampDuty> CmStampDuties => Set<CmStampDuty>();
+    public DbSet<CmSettlementMaster> CmSettlementMasters => Set<CmSettlementMaster>();
+    public DbSet<CmScripMaster> CmScripMasters => Set<CmScripMaster>();
+
+    // Post-Trade Processing — Futures & Options (NFO / BFO) File Import
+    public DbSet<FoFileImportBatch> FoFileImportBatches => Set<FoFileImportBatch>();
+    public DbSet<FoFileImportLog> FoFileImportLogs => Set<FoFileImportLog>();
+    public DbSet<FoTrade> FoTrades => Set<FoTrade>();
+    public DbSet<FoBhavCopy> FoBhavCopies => Set<FoBhavCopy>();
+    public DbSet<FoStt> FoStts => Set<FoStt>();
+    public DbSet<FoStampDuty> FoStampDuties => Set<FoStampDuty>();
+    public DbSet<FoPosition> FoPositions => Set<FoPosition>();
+    public DbSet<FoContractMaster> FoContractMasters => Set<FoContractMaster>();
+    public DbSet<FoContract> FoContracts => Set<FoContract>();      // Curated master (from FoContractMaster)
+    public DbSet<FoTradeDate> FoTradeDates => Set<FoTradeDate>();   // Date-level normalized staging
+
+    // Post-Trade Processing — FO Structured Tables (populated from staging after import)
+    public DbSet<FoTradeBook> FoTradeBook => Set<FoTradeBook>();
+    public DbSet<FoDailyMarketData> FoDailyMarketData => Set<FoDailyMarketData>();
+    public DbSet<FoClientPositionBook> FoClientPositionBook => Set<FoClientPositionBook>();
+    public DbSet<FoSttLedger> FoSttLedger => Set<FoSttLedger>();
+    public DbSet<FoStampDutyLedger> FoStampDutyLedger => Set<FoStampDutyLedger>();
+    public DbSet<FoFinanceLedger> FoFinanceLedger => Set<FoFinanceLedger>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         // Apply all configurations
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(PostTradeDbContext).Assembly);
+
+        // Shared FO trade serial number sequence.
+        // Used by FoTradeDate on insert (HasDefaultValueSql("nextval(...)")).
+        // Also used by BF/CF/EX/AS/CL/manual trade creation via raw SQL nextval() call.
+        modelBuilder.HasSequence<long>("fo_trn_slno_seq", "post_trade")
+            .StartsAt(1)
+            .IncrementsBy(1);
 
         // Global query filter for multi-tenancy
         // tenantId may be Guid.Empty at design-time (migrations); skip filters in that case
@@ -101,6 +142,36 @@ public class PostTradeDbContext : DbContext
             modelBuilder.Entity<Position>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<SettlementBatch>().HasQueryFilter(e => e.TenantId == tenantId);
             modelBuilder.Entity<LedgerEntry>().HasQueryFilter(e => e.TenantId == tenantId);
+
+            // Post-Trade Processing
+            modelBuilder.Entity<CmFileImportBatch>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmTrade>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmBhavCopy>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmMargin>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmObligation>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmStt>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmStampDuty>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmSettlementMaster>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<CmScripMaster>().HasQueryFilter(e => e.TenantId == tenantId);
+
+            // FO staging tables
+            modelBuilder.Entity<FoFileImportBatch>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoTrade>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoBhavCopy>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoStt>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoStampDuty>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoPosition>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoContractMaster>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoContract>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoTradeDate>().HasQueryFilter(e => e.TenantId == tenantId);
+
+            // FO structured tables
+            modelBuilder.Entity<FoTradeBook>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoDailyMarketData>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoClientPositionBook>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoSttLedger>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoStampDutyLedger>().HasQueryFilter(e => e.TenantId == tenantId);
+            modelBuilder.Entity<FoFinanceLedger>().HasQueryFilter(e => e.TenantId == tenantId);
         }
     }
 

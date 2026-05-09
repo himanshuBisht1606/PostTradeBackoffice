@@ -22,6 +22,8 @@ namespace PostTrade.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.HasSequence("fo_trn_slno_seq", "post_trade");
+
             modelBuilder.Entity("PostTrade.Domain.Entities.Audit.AuditLog", b =>
                 {
                     b.Property<Guid>("AuditId")
@@ -199,6 +201,13 @@ namespace PostTrade.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ApplicableTo")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Both");
+
                     b.Property<string>("AuditTrail")
                         .HasColumnType("text");
 
@@ -250,6 +259,17 @@ namespace PostTrade.Persistence.Migrations
                     b.Property<decimal>("Rate")
                         .HasColumnType("decimal(18,6)");
 
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Segment")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("All");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
@@ -264,7 +284,7 @@ namespace PostTrade.Persistence.Migrations
 
                     b.HasKey("ChargesConfigId");
 
-                    b.HasIndex("TenantId", "BrokerId", "ChargeType", "EffectiveFrom");
+                    b.HasIndex("TenantId", "BrokerId", "ChargeType", "Segment", "EffectiveFrom");
 
                     b.ToTable("ChargesConfigurations", "ledger");
                 });
@@ -568,10 +588,6 @@ namespace PostTrade.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Address")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
-
                     b.Property<string>("AuditTrail")
                         .HasColumnType("text");
 
@@ -585,6 +601,22 @@ namespace PostTrade.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("CIN")
+                        .HasMaxLength(21)
+                        .HasColumnType("character varying(21)");
+
+                    b.Property<string>("ComplianceOfficerEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ComplianceOfficerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ComplianceOfficerPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("ContactEmail")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -592,6 +624,174 @@ namespace PostTrade.Persistence.Migrations
 
                     b.Property<string>("ContactPhone")
                         .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("CorrespondenceAddressLine1")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CorrespondenceAddressLine2")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CorrespondenceCity")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("CorrespondencePinCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("CorrespondenceSameAsRegistered")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("CorrespondenceState")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("EntityType")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("GST")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<DateOnly?>("IncorporationDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LogoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("PAN")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("PrincipalOfficerEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PrincipalOfficerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PrincipalOfficerPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("RegisteredAddressLine1")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("RegisteredAddressLine2")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("RegisteredCity")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("RegisteredCountry")
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("India");
+
+                    b.Property<string>("RegisteredPinCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("RegisteredState")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateOnly?>("SEBIRegistrationDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("SEBIRegistrationExpiry")
+                        .HasColumnType("date");
+
+                    b.Property<string>("SEBIRegistrationNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("SettlementBankAccountNo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("SettlementBankBranch")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SettlementBankIfsc")
+                        .HasMaxLength(11)
+                        .HasColumnType("character varying(11)");
+
+                    b.Property<string>("SettlementBankName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TAN")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("BrokerId");
+
+                    b.HasIndex("TenantId", "BrokerCode")
+                        .IsUnique();
+
+                    b.ToTable("Brokers", "master");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.BrokerExchangeMembership", b =>
+                {
+                    b.Property<Guid>("BrokerExchangeMembershipId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AuditTrail")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("BrokerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClearingMemberId")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
@@ -608,26 +808,31 @@ namespace PostTrade.Persistence.Migrations
                     b.Property<string>("DeletedBy")
                         .HasColumnType("text");
 
-                    b.Property<string>("GST")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                    b.Property<DateOnly>("EffectiveDate")
+                        .HasColumnType("date");
+
+                    b.Property<Guid>("ExchangeSegmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("PAN")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("SEBIRegistrationNo")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<int>("Status")
+                    b.Property<int>("MembershipType")
                         .HasColumnType("integer");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("TradingMemberId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -638,12 +843,14 @@ namespace PostTrade.Persistence.Migrations
                     b.Property<int>("Version")
                         .HasColumnType("integer");
 
-                    b.HasKey("BrokerId");
+                    b.HasKey("BrokerExchangeMembershipId");
 
-                    b.HasIndex("TenantId", "BrokerCode")
+                    b.HasIndex("ExchangeSegmentId");
+
+                    b.HasIndex("BrokerId", "ExchangeSegmentId")
                         .IsUnique();
 
-                    b.ToTable("Brokers", "master");
+                    b.ToTable("BrokerExchangeMemberships", "master");
                 });
 
             modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.CdslDpMaster", b =>
@@ -784,7 +991,6 @@ namespace PostTrade.Persistence.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("ClientCode")
-                        .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)");
 
@@ -913,6 +1119,11 @@ namespace PostTrade.Persistence.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
+                    b.Property<string>("RegistrationNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("ResidentialStatus")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -961,6 +1172,10 @@ namespace PostTrade.Persistence.Migrations
                     b.HasIndex("TenantId", "BrokerId");
 
                     b.HasIndex("TenantId", "ClientCode")
+                        .IsUnique()
+                        .HasFilter("\"ClientCode\" IS NOT NULL");
+
+                    b.HasIndex("TenantId", "RegistrationNumber")
                         .IsUnique();
 
                     b.ToTable("Clients", "master");
@@ -1370,6 +1585,14 @@ namespace PostTrade.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("BrokerCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClearingCorp")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1396,6 +1619,10 @@ namespace PostTrade.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("GlobalExchangeCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
@@ -1410,6 +1637,10 @@ namespace PostTrade.Persistence.Migrations
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("TradingMemberId")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -2183,6 +2414,3410 @@ namespace PostTrade.Persistence.Migrations
                     b.ToTable("UserRoles", "master");
                 });
 
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmBhavCopy", b =>
+                {
+                    b.Property<Guid>("BhavCopyRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ClsPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("FinInstrmId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FinInstrmNm")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal>("HghPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("LastPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("LwPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal?>("MktCpzn")
+                        .HasColumnType("decimal(22,2)");
+
+                    b.Property<decimal>("OpnPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("PrvClsgPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("SctySrs")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradDt")
+                        .HasColumnType("date");
+
+                    b.Property<long>("TtlTradgVol")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TtlTrfVal")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("BhavCopyRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId", "FinInstrmId");
+
+                    b.ToTable("CmBhavCopies", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmFileImportBatch", b =>
+                {
+                    b.Property<Guid>("BatchId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("CreatedRows")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("ErrorRows")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("FileType")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("SkippedRows")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TotalRows")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("TradingDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("TriggerSource")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("BatchId");
+
+                    b.HasIndex("TenantId", "FileType", "Exchange", "TradingDate")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 2");
+
+                    b.ToTable("CmFileImportBatches", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmFileImportLog", b =>
+                {
+                    b.Property<Guid>("LogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("RawData")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<int>("RowNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("LogId");
+
+                    b.HasIndex("BatchId");
+
+                    b.ToTable("CmFileImportLogs", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmMargin", b =>
+                {
+                    b.Property<Guid>("MarginRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("AddhcMrgnAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClntId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("CrystldLssAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("ExpsrMrgnAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("IsinCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("MtmMrgnAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("ScripNm")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Sgmt")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradDt")
+                        .HasColumnType("date");
+
+                    b.Property<string>("TradngMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("TtlMrgnAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("VrMrgnAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.HasKey("MarginRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId", "ClntId");
+
+                    b.ToTable("CmMargins", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmObligation", b =>
+                {
+                    b.Property<Guid>("ObligationRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClntId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("CrObligStdAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("DrObligStdAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("IsinCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("NetQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("ObligStdAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("ObligTyp")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ScripNm")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateOnly>("SttlmDt")
+                        .HasColumnType("date");
+
+                    b.Property<string>("SttlmId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradDt")
+                        .HasColumnType("date");
+
+                    b.Property<string>("TradngMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("ObligationRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId", "ClntId");
+
+                    b.ToTable("CmObligations", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmScripMaster", b =>
+                {
+                    b.Property<Guid>("CmScripMasterId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("FaceValue")
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<string>("ISIN")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<string>("InstrumentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LotSize")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Series")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TickSize")
+                        .HasColumnType("decimal(10,4)");
+
+                    b.Property<DateOnly>("TradingDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("CmScripMasterId");
+
+                    b.HasIndex("TenantId", "Exchange", "TradingDate");
+
+                    b.HasIndex("TenantId", "Exchange", "TradingDate", "ISIN")
+                        .IsUnique();
+
+                    b.ToTable("CmScripMasters", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmSettlementMaster", b =>
+                {
+                    b.Property<Guid>("CmSettlementMasterId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly>("PayInDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly>("PayOutDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("SettlementNo")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("SettlementType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradingDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("CmSettlementMasterId");
+
+                    b.HasIndex("TenantId", "Exchange", "TradingDate", "SettlementNo")
+                        .IsUnique();
+
+                    b.ToTable("CmSettlementMasters", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmStampDuty", b =>
+                {
+                    b.Property<Guid>("StampDutyRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BuySellInd")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClntId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("IsinCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("RptHdr")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ScripNm")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Sgmt")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("StmpDtyAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("StmpDtyRate")
+                        .HasColumnType("decimal(10,6)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradDt")
+                        .HasColumnType("date");
+
+                    b.Property<long>("TradQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TradVal")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("TradngMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("StampDutyRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId");
+
+                    b.ToTable("CmStampDuties", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmStt", b =>
+                {
+                    b.Property<Guid>("SttRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BuySellInd")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClntId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("IsinCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("RptHdr")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ScripNm")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Sgmt")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("SttRate")
+                        .HasColumnType("decimal(10,6)");
+
+                    b.Property<decimal>("SttTaxAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradDt")
+                        .HasColumnType("date");
+
+                    b.Property<long>("TradQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TradVal")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("TradngMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("SttRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId");
+
+                    b.ToTable("CmStts", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmTrade", b =>
+                {
+                    b.Property<Guid>("TradeRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BuySellInd")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClntId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("FinInstrmId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FinInstrmNm")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("OrdId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("PricePrUnit")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Sgmt")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Src")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("SttlmId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("SttlmTyp")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradDt")
+                        .HasColumnType("date");
+
+                    b.Property<long>("TradQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TradVal")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("TradngMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("UniqueTradeId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("TradeRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId", "UniqueTradeId");
+
+                    b.ToTable("CmTrades", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoBhavCopy", b =>
+                {
+                    b.Property<Guid>("BhavCopyRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("ChngInOpnIntrst")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("ClsPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FinInstrmId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FinInstrmNm")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FinInstrmTp")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("HghPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("InstrumentType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("LastPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("LwPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("NewBrdLotQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("OpnIntrst")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("OpnPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("OptnTp")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<decimal>("PrvsClsgPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("SctySrs")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Sgmt")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Src")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("StrkPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("SttlmPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("TckrSymb")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradDt")
+                        .HasColumnType("date");
+
+                    b.Property<long>("TtlNbOfTxsExctd")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TtlTradgVol")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TtlTrfVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("UndrlygPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("XpryDt")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("BhavCopyRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "TradDt", "Exchange", "TckrSymb");
+
+                    b.ToTable("FoBhavCopies", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoClientPositionBook", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("AssignedQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BrokerId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClearingMemberId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClientCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ClientStateCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ClientType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ContractName")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("ContractType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("DailyMtmSettlement")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("DayBuyQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("DayBuyValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("DaySellQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("DaySellValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("ExerciseAssignmentValue")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("ExercisedQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("FuturesFinalSettlement")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("LotSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("NetPremium")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("OpenLongQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("OpenLongValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("OpenShortQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("OpenShortValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<string>("OptionType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<long>("PostExerciseLongQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("PostExerciseLongValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("PostExerciseShortQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("PostExerciseShortValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("PreExerciseLongQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("PreExerciseLongValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("PreExerciseShortQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("PreExerciseShortValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("PremiumAmount")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("ReferenceRate")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("SegmentIndicator")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("SettlementPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("StrikePrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradeDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId");
+
+                    b.HasIndex("TenantId", "TradeDate", "Exchange", "ClientCode");
+
+                    b.ToTable("FoClientPositionBook", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoContract", b =>
+                {
+                    b.Property<Guid>("ContractId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContractName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("FMultiplier")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,6)")
+                        .HasDefaultValue(1m);
+
+                    b.Property<string>("FinInstrmId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("InstrumentType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("LotSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OptionType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<Guid?>("RegisteredInstrumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("SourceBatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("StrikePrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("SttlmMtd")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TickSize")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateOnly>("TradingDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("UnderlyingSymbol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("ContractId");
+
+                    b.HasIndex("TenantId", "Exchange", "TradingDate", "FinInstrmId");
+
+                    b.HasIndex("TenantId", "Exchange", "TradingDate", "Symbol", "ExpiryDate");
+
+                    b.ToTable("FoContracts", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoContractMaster", b =>
+                {
+                    b.Property<Guid>("ContractRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("BasePric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("FMultiplier")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,6)")
+                        .HasDefaultValue(1m);
+
+                    b.Property<string>("FinInstrmId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FinInstrmNm")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FinInstrmTp")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("MinLot")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MktTpAndId")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("NewBrdLotQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OptnExrcStyle")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("OptnTp")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<Guid?>("RegisteredInstrumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("StockNm")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal>("StrkPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("SttlmMtd")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("TckrSymb")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TickSize")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateOnly>("TradingDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("UndrlygFinInstrmId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("XpryDt")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("ContractRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "Exchange", "TradingDate", "TckrSymb");
+
+                    b.ToTable("FoContractMasters", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoDailyMarketData", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ClosePrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("ContractType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("HighPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("InstrumentId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("InstrumentName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("LastTradedPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("LotSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("LowPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("OpenInterest")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("OpenInterestChange")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("OpenPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("OptionType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<decimal>("PreviousClose")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Segment")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("SettlementPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("StrikePrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("TotalTrades")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TotalTurnover")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("TotalVolume")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateOnly>("TradeDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("UnderlyingPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId");
+
+                    b.HasIndex("TenantId", "TradeDate", "Exchange", "Symbol");
+
+                    b.ToTable("FoDailyMarketData", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", b =>
+                {
+                    b.Property<Guid>("BatchId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("CreatedRows")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("ErrorRows")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("FileType")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("SkippedRows")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("TotalRows")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("TradingDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("TriggerSource")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("BatchId");
+
+                    b.HasIndex("TenantId", "FileType", "Exchange", "TradingDate")
+                        .IsUnique()
+                        .HasFilter("\"Status\" = 2");
+
+                    b.ToTable("FoFileImportBatches", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportLog", b =>
+                {
+                    b.Property<Guid>("LogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Level")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("RawData")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("RowNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("LogId");
+
+                    b.HasIndex("BatchId");
+
+                    b.ToTable("FoFileImportLogs", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoFinanceLedger", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BrokerId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("Brokerage")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("BuyTurnover")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<string>("ClearingMemberId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClientCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("DailyMtmSettlement")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("ExchangeTransactionCharges")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("ExerciseAssignmentValue")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("FinalSettlement")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("GstOnCharges")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("Ipft")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("NetAmount")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("NetPremium")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("SebiCharges")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("SellTurnover")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("TotalCharges")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("TotalStampDuty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("TotalStt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("TotalTurnover")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<DateOnly>("TradeDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "ClientId");
+
+                    b.HasIndex("TenantId", "TradeDate", "Exchange");
+
+                    b.HasIndex("TenantId", "TradeDate", "Exchange", "ClientCode")
+                        .IsUnique();
+
+                    b.ToTable("FoFinanceLedger", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoPosition", b =>
+                {
+                    b.Property<Guid>("PositionRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("AssgndQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ClientStateCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ClntId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClntTp")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ClrMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("DalyMrkToMktSettlmVal")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("ExrcAssgndVal")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("ExrcdQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("FinInstrmTp")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("FutrsFnlSttlmVal")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("NewBrdLotQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("OpnBuyTradgQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("OpnBuyTradgVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("OpnSellTradgQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("OpnSellTradgVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("OpngLngQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("OpngLngVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("OpngShrtQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("OpngShrtVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<string>("OptnTp")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<long>("PreExrcAssgndLngQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("PreExrcAssgndLngVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("PreExrcAssgndShrtQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("PreExrcAssgndShrtVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("PrmAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("PstExrcAssgndLngQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("PstExrcAssgndLngVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("PstExrcAssgndShrtQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("PstExrcAssgndShrtVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("RefRate")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Sgmt")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Src")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("StrkPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("SttlmPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("TckrSymb")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradDt")
+                        .HasColumnType("date");
+
+                    b.Property<string>("TradngMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("XpryDt")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("PositionRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId", "ClntId", "TckrSymb");
+
+                    b.ToTable("FoPositions", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoStampDuty", b =>
+                {
+                    b.Property<Guid>("StampDutyRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("BuyDlvryQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("BuyDlvryStmpDty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("BuyDlvryVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("BuyOthrThanDlvryQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("BuyOthrThanDlvryStmpDty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("BuyOthrThanDlvryVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("BuyStmpDty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ClientStateCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ClntId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClrMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CtrySubDvsn")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FinInstrmTp")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("OptnTp")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("RptHdr")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<decimal>("SellStmpDty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Sgmt")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Src")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("StmpDtyAmt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("StrkPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("SttlmPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("TckrSymb")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradDt")
+                        .HasColumnType("date");
+
+                    b.Property<string>("TradngMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("TtlBuyTradgVol")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TtlBuyTrfVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("TtlSellTradgVol")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TtlSellTrfVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("XpryDt")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("StampDutyRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId", "ClntId", "TckrSymb");
+
+                    b.ToTable("FoStampDuties", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoStampDutyLedger", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BrokerId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal>("BuyStampDuty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("ClearingMemberId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClientCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ClientStateCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ContractType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<long>("DeliveryBuyQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("DeliveryBuyStampDuty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("DeliveryBuyValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("FuturesExpiryStampDuty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("FuturesStampDuty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("NonDeliveryBuyQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("NonDeliveryBuyStampDuty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("NonDeliveryBuyValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<string>("OptionType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<decimal>("OptionsExpiryStampDuty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("OptionsStampDuty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("SellStampDuty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("SettlementPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("StateCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("StateName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<decimal>("StrikePrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("TotalBuyQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TotalBuyValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("TotalSellQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TotalSellValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("TotalStampDuty")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateOnly>("TradeDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId");
+
+                    b.HasIndex("TenantId", "TradeDate", "Exchange", "ClientCode");
+
+                    b.ToTable("FoStampDutyLedger", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoStt", b =>
+                {
+                    b.Property<Guid>("SttRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ClientStateCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ClntId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClrMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FinInstrmTp")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("FutrsTtlTaxs")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("OptnExrcQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("OptnExrcVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<string>("OptnTp")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<decimal>("OptnTtlTaxs")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("RptHdr")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("Sgmt")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Src")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("StrkPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("SttlmPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("TaxblExrcVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("TaxblSellFutrsVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("TaxblSellOptnVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<string>("TckrSymb")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradDt")
+                        .HasColumnType("date");
+
+                    b.Property<string>("TradngMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("TtlBuyTradgVol")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TtlBuyTrfVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("TtlSellTradgVol")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TtlSellTrfVal")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("TtlTaxs")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("XpryDt")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("SttRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId", "ClntId", "TckrSymb");
+
+                    b.ToTable("FoStts", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoSttLedger", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BrokerId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClearingMemberId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClientCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ClientStateCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ContractType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("FuturesExpiryStt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("FuturesStt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("OptionExerciseQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("OptionExerciseValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<string>("OptionType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<decimal>("OptionsExpiryStt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("OptionsStt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("SettlementPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("StrikePrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("TaxableExerciseValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("TaxableSellFuturesValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("TaxableSellOptionValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("TotalBuyQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TotalBuyValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<long>("TotalSellQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TotalSellValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<decimal>("TotalStt")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateOnly>("TradeDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId");
+
+                    b.HasIndex("TenantId", "TradeDate", "Exchange", "ClientCode");
+
+                    b.ToTable("FoSttLedger", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoTrade", b =>
+                {
+                    b.Property<Guid>("TradeRowId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BuySellInd")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ClientStateCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ClntId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClntTp")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CtclId")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FinInstrmId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FinInstrmNm")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FinInstrmTp")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("InstrumentType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("LotSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MktTpandId")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("NewBrdLotQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("NumLots")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("OptnTp")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("OrdrRef")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("OrgnlCtdnPtcptId")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("Pric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("RptdTxSts")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("SctiesSttlmTxId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Sgmt")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("Src")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("StrkPric")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("SttlmCycl")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("SttlmTp")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TckrSymb")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradDt")
+                        .HasColumnType("date");
+
+                    b.Property<string>("TradDtTm")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<long>("TradQty")
+                        .HasColumnType("bigint");
+
+                    b.Property<decimal>("TradeValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<string>("TradngMmbId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("UnderlyingSymbol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UniqueTradeId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("XpryDt")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.HasKey("TradeRowId");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId", "UniqueTradeId");
+
+                    b.HasIndex("TenantId", "TradDt", "Exchange", "TckrSymb");
+
+                    b.ToTable("FoTrades", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoTradeBook", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BookType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("BookTypeName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("BranchCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("BrokerId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<decimal?>("Brokerage")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("ClearingMemberId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClientCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ClientStateCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ClientType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ContractType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("CounterpartyCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CtclId")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal?>("ExerciseAssignmentPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("FMultiplier")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,6)")
+                        .HasDefaultValue(1m);
+
+                    b.Property<string>("GlobalExchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("InstrumentId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("InstrumentName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<bool>("IsCustodianTrade")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("LotSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MarketType")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal?>("NetPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("NumberOfLots")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("OptionType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("OrderRef")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("OriginalClientId")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("Quantity")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Segment")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("SettlementDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("SettlementTransactionId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("SettlementType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Side")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<decimal>("StrikePrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradeDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("TradeDateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TradeStatus")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("TradeValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<string>("TrdType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<long>("TrnSlNo")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("UnderlyingSymbol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UniqueTradeId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "TrnSlNo")
+                        .IsUnique();
+
+                    b.HasIndex("TenantId", "BatchId", "UniqueTradeId");
+
+                    b.HasIndex("TenantId", "ClientCode", "TradeDate");
+
+                    b.HasIndex("TenantId", "GlobalExchange", "TradeDate", "ClientCode");
+
+                    b.HasIndex("TenantId", "TradeDate", "Exchange", "Symbol");
+
+                    b.ToTable("FoTradeBook", "post_trade");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoTradeDate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BookType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("BookTypeName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("ClearingMemberId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ClientCode")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<Guid?>("ClientId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ClientName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("ClientStateCode")
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ClientType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("ContractName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("CounterpartyCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CtclId")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("text");
+
+                    b.Property<string>("Exchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("ExpiryDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal>("FMultiplier")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,6)")
+                        .HasDefaultValue(1m);
+
+                    b.Property<string>("FileName")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("GlobalExchange")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("InstrumentId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("InstrumentType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<bool>("IsCustodianTrade")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Isin")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<long>("LotSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MarketType")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("NetPrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<decimal>("NumberOfLots")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("OptionType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<string>("OrderRef")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("OriginalClientCode")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<long>("Quantity")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Segment")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly?>("SettlementDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("SettlementTransactionId")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("SettlementType")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Side")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<decimal>("StrikePrice")
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<string>("Symbol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("TradeDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime?>("TradeDateTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TradeStatus")
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<decimal>("TradeValue")
+                        .HasColumnType("decimal(22,4)");
+
+                    b.Property<string>("TradingMemberId")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("TrdType")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("character varying(5)");
+
+                    b.Property<long>("TrnSlNo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValueSql("nextval('post_trade.fo_trn_slno_seq')");
+
+                    b.Property<string>("UnderlyingSymbol")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("UniqueTradeId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BatchId");
+
+                    b.HasIndex("TenantId", "BatchId");
+
+                    b.HasIndex("TenantId", "GlobalExchange", "TradeDate", "ClientCode");
+
+                    b.HasIndex("TenantId", "TradeDate", "Exchange", "UniqueTradeId", "ClientCode", "Side")
+                        .IsUnique();
+
+                    b.ToTable("FoTradeDate", "post_trade");
+                });
+
             modelBuilder.Entity("PostTrade.Domain.Entities.Reconciliation.ReconException", b =>
                 {
                     b.Property<Guid>("ExceptionId")
@@ -2849,6 +6484,25 @@ namespace PostTrade.Persistence.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.BrokerExchangeMembership", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.MasterData.Broker", "Broker")
+                        .WithMany("ExchangeMemberships")
+                        .HasForeignKey("BrokerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PostTrade.Domain.Entities.MasterData.ExchangeSegment", "ExchangeSegment")
+                        .WithMany()
+                        .HasForeignKey("ExchangeSegmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Broker");
+
+                    b.Navigation("ExchangeSegment");
+                });
+
             modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.Client", b =>
                 {
                     b.HasOne("PostTrade.Domain.Entities.MasterData.Branch", "Branch")
@@ -3081,6 +6735,226 @@ namespace PostTrade.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmBhavCopy", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.CmFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmFileImportLog", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.CmFileImportBatch", "Batch")
+                        .WithMany("Logs")
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmMargin", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.CmFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmObligation", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.CmFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmStampDuty", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.CmFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmStt", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.CmFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmTrade", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.CmFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoBhavCopy", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoClientPositionBook", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoContractMaster", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoDailyMarketData", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportLog", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany("Logs")
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoPosition", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoStampDuty", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoStampDutyLedger", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoStt", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoSttLedger", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoTrade", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoTradeBook", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoTradeDate", b =>
+                {
+                    b.HasOne("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", "Batch")
+                        .WithMany()
+                        .HasForeignKey("BatchId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Batch");
+                });
+
             modelBuilder.Entity("PostTrade.Domain.Entities.Reconciliation.ReconException", b =>
                 {
                     b.HasOne("PostTrade.Domain.Entities.Reconciliation.Reconciliation", null)
@@ -3109,6 +6983,8 @@ namespace PostTrade.Persistence.Migrations
             modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.Broker", b =>
                 {
                     b.Navigation("Clients");
+
+                    b.Navigation("ExchangeMemberships");
                 });
 
             modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.Client", b =>
@@ -3152,6 +7028,16 @@ namespace PostTrade.Persistence.Migrations
             modelBuilder.Entity("PostTrade.Domain.Entities.MasterData.User", b =>
                 {
                     b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.CmFileImportBatch", b =>
+                {
+                    b.Navigation("Logs");
+                });
+
+            modelBuilder.Entity("PostTrade.Domain.Entities.PostTradeProcessing.FoFileImportBatch", b =>
+                {
+                    b.Navigation("Logs");
                 });
 
             modelBuilder.Entity("PostTrade.Domain.Entities.Settlement.SettlementBatch", b =>
