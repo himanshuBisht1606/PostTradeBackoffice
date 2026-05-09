@@ -22,7 +22,7 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
     private readonly IRepository<FoFileImportLog> _logRepo;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITenantContext _tenantContext;
-    private const int BatchSize = 2000;
+    private const int BatchSize = 5000;
 
     public ImportFoContractMasterCommandHandler(
         IRepository<FoFileImportBatch> batchRepo,
@@ -97,10 +97,13 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
         // NFO / BFO contract file column layout (comma-delimited, identical for both exchanges):
         // 0=FinInstrmId, 1=UndrlygFinInstrmId, 2=FinInstrmNm(type code), 3=TckrSymb, 4=XpryDt,
         // 5=StrkPric, 6=OptnTp, 7=PrtdToTrad, 8=MinLot, 9=NewBrdLotQty, 10=BidIntrvl(TickSize),
-        // 18=StockNm(NSE: full contract name), 19=SttlmMtd(NSE: C/D),
-        // 20=BasePric(NSE only), 27=MktTpAndId, 60=OptnExrcStyle,
-        // 71=Mltplr (FMultiplier / CMULTIPLIER), 110=ISIN
-        bool isNse = request.Exchange == "NFO";
+        // NSE: 18=full contract name, 19=SttlmMtd (C/D), 20=BasePric
+        // BSE: 18=StockNm (short code e.g. "EDX"), 19=full contract name
+        // Detect BSE format: exchange "BFO"/"BSE" or filename starting with "BSE"
+        bool isBse = request.Exchange.Equals("BFO", StringComparison.OrdinalIgnoreCase)
+                  || request.Exchange.Equals("BSE", StringComparison.OrdinalIgnoreCase)
+                  || request.FileName.StartsWith("BSE", StringComparison.OrdinalIgnoreCase);
+        bool isNse = !isBse;
         using var reader = new StreamReader(request.FileStream);
         string? line;
         bool isHeader = true;

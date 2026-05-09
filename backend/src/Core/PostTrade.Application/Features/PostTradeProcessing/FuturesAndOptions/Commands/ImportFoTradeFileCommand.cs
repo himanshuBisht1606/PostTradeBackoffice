@@ -476,10 +476,16 @@ public class ImportFoTradeFileCommandHandler : IRequestHandler<ImportFoTradeFile
 
     internal static string MapInstrumentType(string finInstrmTp) => finInstrmTp.ToUpperInvariant() switch
     {
+        // NSE instrument type codes
         "IDF"    => "FUTIDX",
         "STF"    => "FUTSTK",
         "IDO"    => "OPTIDX",
         "STO"    => "OPTSTK",
+        // BSE EQD instrument type codes (SO=Stock Option, SF=Stock Future, IO=Index Option, IF=Index Future)
+        "SO"     => "OPTSTK",
+        "SF"     => "FUTSTK",
+        "IO"     => "OPTIDX",
+        "IF"     => "FUTIDX",
         "FUTIDX" => "FUTIDX",
         "FUTSTK" => "FUTSTK",
         "OPTIDX" => "OPTIDX",

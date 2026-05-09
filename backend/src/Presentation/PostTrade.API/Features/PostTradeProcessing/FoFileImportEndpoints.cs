@@ -4,6 +4,7 @@ using PostTrade.Application.Features.MasterSetup.Instruments.DTOs;
 using PostTrade.Application.Features.PostTradeProcessing.FuturesAndOptions.Commands;
 using PostTrade.Application.Features.PostTradeProcessing.FuturesAndOptions.DTOs;
 using PostTrade.Application.Features.PostTradeProcessing.FuturesAndOptions.Queries;
+using PostTrade.Application.Interfaces;
 using PostTrade.Domain.Enums;
 
 namespace PostTrade.API.Features.PostTradeProcessing;
@@ -13,15 +14,47 @@ public static class FoFileImportEndpoints
     public static RouteGroupBuilder MapFoFileImportEndpoints(this RouteGroupBuilder group)
     {
         // ── Contract Master (prerequisite for trade import) ───────────────────
-
-        group.MapPost("/import/contract-master", async (IFormFile file, ISender sender,
-            DateOnly tradingDate, string exchange = "NFO") =>
+        // Large files (NSE ~34 MB, BSE ~17 MB, ~50K rows) can take 90+ seconds to import.
+        // We copy the upload to a MemoryStream, return 202 immediately, and finish in a
+        // background DI scope — same pattern used by ImportSchedulerService.
+        // Poll GET /import/batches?fileType=ContractMaster&tradingDate=...&exchange=... for status.
+        group.MapPost("/import/contract-master", async (
+            IFormFile file,
+            ITenantContext tenantContext,
+            IServiceScopeFactory scopeFactory,
+            DateOnly tradingDate,
+            string exchange = "NFO") =>
         {
-            await using var stream = file.OpenReadStream();
-            // CancellationToken.None — import must run to completion regardless of client timeout
-            var result = await sender.Send(
-                new ImportFoContractMasterCommand(stream, tradingDate, exchange, file.FileName), CancellationToken.None);
-            return Results.Ok(ApiResponse<object>.Ok(result, "FO Contract Master imported"));
+            var tenantId = tenantContext.GetCurrentTenantId();
+            var fileName = file.FileName;
+
+            // Copy the upload now — the multipart stream is unavailable after the response is sent
+            var ms = new MemoryStream((int)Math.Min(file.Length, int.MaxValue));
+            await file.CopyToAsync(ms);
+            ms.Position = 0;
+
+            _ = Task.Run(async () =>
+            {
+                using var scope = scopeFactory.CreateScope();
+                var bgTenantCtx = scope.ServiceProvider.GetRequiredService<ITenantContext>();
+                bgTenantCtx.SetTenantId(tenantId);
+                var bgSender = scope.ServiceProvider.GetRequiredService<ISender>();
+                try
+                {
+                    await bgSender.Send(
+                        new ImportFoContractMasterCommand(ms, tradingDate, exchange, fileName),
+                        CancellationToken.None);
+                }
+                finally
+                {
+                    await ms.DisposeAsync();
+                }
+            });
+
+            return Results.Accepted("/api/post-trade/fo/import/batches",
+                ApiResponse<object>.Ok(
+                    new { exchange, tradingDate, fileName },
+                    "Import started. Poll /api/post-trade/fo/import/batches for status."));
         })
         .DisableAntiforgery()
         .WithTags("FO File Import");

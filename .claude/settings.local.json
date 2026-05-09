@@ -11,7 +11,8 @@
       "Bash(git restore:*)",
       "Bash(docker version:*)",
       "Bash(cmd:*)",
-      "Bash(Get-ChildItem *)"
+      "Bash(Get-ChildItem *)",
+      "Bash(curl *)"
     ]
   }
 }
