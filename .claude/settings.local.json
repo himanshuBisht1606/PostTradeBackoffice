@@ -10,7 +10,9 @@
       "Bash(Write-Host \"Done\")",
       "Bash(git restore:*)",
       "Bash(docker version:*)",
-      "Bash(cmd:*)"
+      "Bash(cmd:*)",
+      "Bash(Get-ChildItem *)",
+      "Bash(curl *)"
     ]
   }
 }

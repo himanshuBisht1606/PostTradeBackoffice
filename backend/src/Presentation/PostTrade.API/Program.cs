@@ -10,6 +10,7 @@ using PostTrade.API.Features.MasterSetup;
 using PostTrade.API.Features.ReferenceMaster;
 using PostTrade.API.Features.CorporateActions;
 using PostTrade.API.Features.EOD;
+using PostTrade.API.Features.PostTrade;
 using PostTrade.API.Features.Ledger;
 using PostTrade.API.Features.Clearing;
 using PostTrade.API.Features.PostTradeProcessing;
