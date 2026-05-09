@@ -36,6 +36,14 @@ public class GenericRepository<T> : IRepository<T> where T : class
         return await _dbSet.Where(predicate).ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<TResult>> FindProjectedAsync<TResult>(
+        Expression<Func<T, bool>> predicate,
+        Expression<Func<T, TResult>> selector,
+        CancellationToken cancellationToken = default)
+    {
+        return await _dbSet.Where(predicate).Select(selector).ToListAsync(cancellationToken);
+    }
+
     public async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)
     {
         await _dbSet.AddAsync(entity, cancellationToken);

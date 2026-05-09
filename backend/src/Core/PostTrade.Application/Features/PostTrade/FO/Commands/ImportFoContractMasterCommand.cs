@@ -52,32 +52,40 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
         if (exchangeSegment is null)
             return new ImportResultDto(0, 0, [new ImportErrorDto(0, $"No active segment found for exchange '{request.ExchangeCode}'")]);
 
-        var existing = await _instrumentRepo.FindAsync(
+        // Change (b): projection-only duplicate check — avoids loading full Instrument entities
+        var existingCodes = (await _instrumentRepo.FindProjectedAsync(
             i => i.TenantId == tenantId && i.ExchangeId == exchange.ExchangeId,
-            cancellationToken);
-        var existingCodes = existing.Select(i => i.InstrumentCode).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            i => i.InstrumentCode,
+            cancellationToken))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+        // Change (a): stream line-by-line instead of reading the entire file into memory
         using var reader = new StreamReader(request.CsvStream, leaveOpen: true);
-        var content = await reader.ReadToEndAsync(cancellationToken);
-        var lines = content.Split('\n', StringSplitOptions.RemoveEmptyEntries);
 
-        if (lines.Length == 0)
+        var headerLine = await reader.ReadLineAsync(cancellationToken);
+        if (headerLine is null)
             return new ImportResultDto(0, 0, []);
 
-        var header = lines[0].Trim('\r').Split(',');
+        var header = headerLine.Trim('\r').Split(',');
         var colIndex = BuildColumnIndex(header);
 
         var skipped = 0;
         var errors = new List<ImportErrorDto>();
-        var toInsert = new List<Instrument>();
 
-        for (var i = 1; i < lines.Length; i++)
+        // Change (c): batch inserts with tracker clear every 500 rows
+        const int batchSize = 500;
+        var batch = new List<Instrument>(batchSize);
+        var totalCreated = 0;
+        var rowNumber = 1; // header was row 1; data rows start at 2
+
+        string? line;
+        while ((line = await reader.ReadLineAsync(cancellationToken)) is not null)
         {
-            var rowNumber = i + 1;
-            var line = lines[i].Trim('\r').Trim();
-            if (string.IsNullOrWhiteSpace(line)) continue;
+            rowNumber++;
+            var trimmed = line.Trim('\r').Trim();
+            if (string.IsNullOrWhiteSpace(trimmed)) continue;
 
-            var parts = SplitCsvLine(line);
+            var parts = SplitCsvLine(trimmed);
 
             try
             {
@@ -118,7 +126,7 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
                     continue;
                 }
 
-                toInsert.Add(new Instrument
+                var instrument = new Instrument
                 {
                     InstrumentId = Guid.NewGuid(),
                     TenantId = tenantId,
@@ -135,9 +143,19 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
                     OptionType = optionType,
                     Status = InstrumentStatus.Active,
                     CreatedBy = "import"
-                });
+                };
 
+                batch.Add(instrument);
                 existingCodes.Add(instrumentCode);
+
+                if (batch.Count >= batchSize)
+                {
+                    await _instrumentRepo.AddRangeAsync(batch, cancellationToken);
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                    _unitOfWork.ClearTracking();
+                    totalCreated += batch.Count;
+                    batch.Clear();
+                }
             }
             catch (Exception ex)
             {
@@ -145,13 +163,15 @@ public class ImportFoContractMasterCommandHandler : IRequestHandler<ImportFoCont
             }
         }
 
-        if (toInsert.Count > 0)
+        // Flush remaining rows that did not fill a complete batch
+        if (batch.Count > 0)
         {
-            await _instrumentRepo.AddRangeAsync(toInsert, cancellationToken);
+            await _instrumentRepo.AddRangeAsync(batch, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+            totalCreated += batch.Count;
         }
 
-        return new ImportResultDto(toInsert.Count, skipped, errors);
+        return new ImportResultDto(totalCreated, skipped, errors);
     }
 
     private static Dictionary<string, int> BuildColumnIndex(string[] header)

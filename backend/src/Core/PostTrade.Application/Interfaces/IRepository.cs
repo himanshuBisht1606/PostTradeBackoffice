@@ -8,6 +8,10 @@ public interface IRepository<T> where T : class
     Task<T?> FirstOrDefaultAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
     Task<IEnumerable<T>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default);
+    Task<IEnumerable<TResult>> FindProjectedAsync<TResult>(
+        Expression<Func<T, bool>> predicate,
+        Expression<Func<T, TResult>> selector,
+        CancellationToken cancellationToken = default);
     Task<T> AddAsync(T entity, CancellationToken cancellationToken = default);
     Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
     Task UpdateAsync(T entity, CancellationToken cancellationToken = default);
